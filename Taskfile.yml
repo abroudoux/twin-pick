@@ -1,0 +1,15 @@
+version: "3"
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  build:
+    cmds:
+      - go build -o bin/twinpick cmd/main.go
+
+  dev:
+    deps:
+      - build
+    cmds:
+      - ./bin/twinpick
