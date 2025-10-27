@@ -9,7 +9,29 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-func Scrap(letterboxdUsername string) []*string {
+func ScrapUsers(usernames []string) map[string][]*string {
+	allMovies := make(map[string][]*string)
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	for _, username := range usernames {
+		wg.Add(1)
+		go func(user string) {
+			defer wg.Done()
+			userMovies := scrapUser(user)
+			mu.Lock()
+			allMovies[user] = userMovies
+			mu.Unlock()
+		}(username)
+	}
+
+	wg.Wait()
+
+	return allMovies
+}
+
+func scrapUser(letterboxdUsername string) []*string {
 	movieCh := make(chan []string)
 	var wg sync.WaitGroup
 
