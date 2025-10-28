@@ -1,7 +1,13 @@
 package main
 
-import "github.com/abroudoux/twinpick/internal/cli"
+import (
+	"github.com/abroudoux/twinpick/internal/adapters/cli"
+	"github.com/abroudoux/twinpick/internal/application"
+	"github.com/abroudoux/twinpick/internal/infrastructure"
+)
 
 func main() {
-	cli.Execute()
+	provider := infrastructure.NewLetterboxdScrapper()
+	matchService := application.NewMatchService(provider)
+	cli.Execute(matchService)
 }

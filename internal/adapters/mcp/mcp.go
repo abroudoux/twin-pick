@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/abroudoux/twinpick/internal/core"
-	"github.com/abroudoux/twinpick/internal/scrapper"
+	"github.com/abroudoux/twinpick/internal/application"
+	"github.com/abroudoux/twinpick/internal/domain"
 )
 
 type Request struct {
@@ -34,10 +34,12 @@ type FindCommonFilmArgs struct {
 	Platform  string   `json:"platform,omitempty"`
 }
 
-type Server struct{}
+type Server struct {
+	Service *application.MatchService
+}
 
-func NewServer() *Server {
-	return &Server{}
+func NewServer(service *application.MatchService) *Server {
+	return &Server{Service: service}
 }
 
 func (s *Server) Run() {
@@ -67,7 +69,7 @@ func (s *Server) Run() {
 	default:
 		encoder.Encode(Response{
 			ID:    req.ID,
-			Error: fmt.Sprintf("Invalid method : %s", req.Method),
+			Error: fmt.Sprintf("Invalid method: %s", req.Method),
 		})
 	}
 }
@@ -83,7 +85,7 @@ func (s *Server) handleToolCall(req Request, encoder *json.Encoder) {
 	case "find_common_film":
 		s.handleFindCommonFilm(req, call, encoder)
 	default:
-		encoder.Encode(Response{ID: req.ID, Error: "Tool inconnu"})
+		encoder.Encode(Response{ID: req.ID, Error: "Unknown tool"})
 	}
 }
 
@@ -94,15 +96,12 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 		return
 	}
 
-	scrapperParams := scrapper.NewScrapperParams(args.Usernames, args.Genres, args.Platform)
-	watchlists := scrapper.ScrapUsersWachtlists(scrapperParams)
-	commonFilms, err := core.GetCommonFilms(watchlists)
-	if err != nil {
-		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
-		return
+	params := domain.ScrapperParams{
+		Genres:   args.Genres,
+		Platform: args.Platform,
 	}
 
-	selectedFilm, err := core.SelectRandomFilm(commonFilms)
+	film, err := s.Service.FindCommonFilm(args.Usernames, params)
 	if err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
 		return
@@ -114,8 +113,7 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 			"usernames":     args.Usernames,
 			"genres":        args.Genres,
 			"platform":      args.Platform,
-			"common_films":  commonFilms,
-			"selected_film": selectedFilm,
+			"selected_film": film.Name,
 		},
 	})
 }
