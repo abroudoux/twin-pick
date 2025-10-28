@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/abroudoux/twinpick/internal/match"
+	"github.com/abroudoux/twinpick/internal/core"
 	"github.com/abroudoux/twinpick/internal/scrapper"
 )
 
@@ -96,13 +96,13 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 
 	scrapperParams := scrapper.NewScrapperParams(args.Usernames, args.Genres, args.Platform)
 	watchlists := scrapper.ScrapUsersWachtlists(scrapperParams)
-	commonFilms, err := match.GetCommonFilms(watchlists)
+	commonFilms, err := core.GetCommonFilms(watchlists)
 	if err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
 		return
 	}
 
-	selectedFilm, err := match.SelectRandomFilm(commonFilms)
+	selectedFilm, err := core.SelectRandomFilm(commonFilms)
 	if err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
 		return

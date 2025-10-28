@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/abroudoux/twinpick/internal/match"
+	"github.com/abroudoux/twinpick/internal/core"
 	"github.com/abroudoux/twinpick/internal/scrapper"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
@@ -34,7 +34,7 @@ func init() {
 			sParams := scrapper.NewScrapperParams(uList, gList, platform)
 			watchlists := scrapper.ScrapUsersWachtlists(sParams)
 
-			commonFilms, err := match.GetCommonFilms(watchlists)
+			commonFilms, err := core.GetCommonFilms(watchlists)
 			if err != nil {
 				return err
 			}
@@ -44,7 +44,7 @@ func init() {
 				return nil
 			}
 
-			selectedFilm, _ := match.SelectRandomFilm(commonFilms)
+			selectedFilm, _ := core.SelectRandomFilm(commonFilms)
 			log.Infof("🎬 Selected film : %s", selectedFilm)
 			return nil
 		},

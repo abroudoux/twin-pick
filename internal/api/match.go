@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/abroudoux/twinpick/internal/match"
+	"github.com/abroudoux/twinpick/internal/core"
 	"github.com/abroudoux/twinpick/internal/scrapper"
 	"github.com/charmbracelet/log"
 	"github.com/gin-gonic/gin"
@@ -19,7 +19,7 @@ func (s *server) handleMatch(c *gin.Context) {
 
 	watchlists := scrapper.ScrapUsersWachtlists(scrapperParams)
 
-	commonFilms, err := match.GetCommonFilms(watchlists)
+	commonFilms, err := core.GetCommonFilms(watchlists)
 	if err != nil {
 		log.Error("Error while matching watchlists: ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while matching watchlists"})
@@ -31,7 +31,7 @@ func (s *server) handleMatch(c *gin.Context) {
 		return
 	}
 
-	selectedFilm, err := match.SelectRandomFilm(commonFilms)
+	selectedFilm, err := core.SelectRandomFilm(commonFilms)
 	if err != nil {
 		log.Error("Error while selecting a random film: ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while selecting a random film"})
