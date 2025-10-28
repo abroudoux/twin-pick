@@ -22,7 +22,7 @@ func (s *server) handleMatch(c *gin.Context) {
 
 	watchlists := scrapper.ScrapUsersWachtlists(usernames)
 
-	commonFilms, err := match.MatchWatchlists(watchlists)
+	commonFilms, err := match.GetCommonFilms(watchlists)
 	if err != nil {
 		log.Error("Error while matching watchlists: ", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while matching watchlists"})

@@ -6,8 +6,13 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func getCommonFilms(watchlists [][]string) ([]string, error) {
-	if len(watchlists) == 0 {
+func GetCommonFilms(watchlists map[string][]string) ([]string, error) {
+	var lists [][]string
+	for _, wl := range watchlists {
+		lists = append(lists, wl)
+	}
+
+	if len(lists) == 0 {
 		log.Warn("No watchlists provided")
 		return []string{}, fmt.Errorf("no watchlists provided")
 	}
