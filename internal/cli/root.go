@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Long:  "Twinpick is a tool to help you find the perfect film to watch based on your Letterboxd Watchlists.",
 }
 
-func Run() {
+func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
