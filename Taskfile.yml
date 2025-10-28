@@ -7,18 +7,24 @@ tasks:
   build:api:
     desc: "Build Twinpick API server"
     cmds:
-      - go build -o {{.BINDIR}}/api cmd/api/main.go
+      - go build -o {{.BINDIR}}/api cmd/api/api.go
 
   build:mcp:
     desc: "Build Twinpick MCP server"
     cmds:
-      - go build -o {{.BINDIR}}/mcp cmd/mcp/main.go
+      - go build -o {{.BINDIR}}/mcp cmd/mcp/mcp.go
+
+  build:cli:
+    desc: "Build Twinpick CLI"
+    cmds:
+      - go build -o {{.BINDIR}}/cli cmd/cli/cli.go
 
   build:all:
     desc: "Build all Twinpick components"
     deps:
       - build:api
       - build:mcp
+      - build:cli
 
   run:api:
     desc: "Start Twinpick API server"
@@ -33,6 +39,13 @@ tasks:
       - build:mcp
     cmds:
       - ./{{.BINDIR}}/mcp
+
+  run:cli:
+    desc: "Run Twinpick CLI"
+    deps:
+      - build:cli
+    cmds:
+      - ./{{.BINDIR}}/cli {{.CLI_ARGS}}
 
   run:all:
     desc: "Start all Twinpick components"
