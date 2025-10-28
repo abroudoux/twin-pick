@@ -19,10 +19,3 @@ func (s *server) Run() {
 	s.registerRoutes()
 	s.router.Run(fmt.Sprintf(":%d", 8080))
 }
-
-func (s *server) registerRoutes() {
-	api := s.router.Group("/api")
-	v1 := api.Group("/v1")
-
-	v1.GET("/match/:usernames/:genres", s.handleMatch)
-}

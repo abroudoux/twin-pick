@@ -3,23 +3,40 @@ package scrapper
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/charmbracelet/log"
 	"github.com/gocolly/colly/v2"
 )
 
-func ScrapUsersWachtlists(usernames []string, genres []string) map[string][]string {
+type ScrapperParams struct {
+	usernames []string
+	genres    []string
+	platform  string
+}
+
+func NewScrapperParams(usernames, genres []string, platform string) *ScrapperParams {
+	return &ScrapperParams{
+		usernames: usernames,
+		genres:    genres,
+		platform:  platform,
+	}
+}
+
+func ScrapUsersWachtlists(scrapperParams *ScrapperParams) map[string][]string {
 	watchlists := make(map[string][]string)
 
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	for _, username := range usernames {
+	for _, username := range scrapperParams.usernames {
 		wg.Add(1)
 		go func(user string) {
 			defer wg.Done()
-			watchlist := scrapWatchlist(user, genres)
+
+			watchlist := scrapWatchlist(user, scrapperParams)
+
 			mu.Lock()
 			watchlists[user] = watchlist
 			mu.Unlock()
@@ -31,7 +48,7 @@ func ScrapUsersWachtlists(usernames []string, genres []string) map[string][]stri
 	return watchlists
 }
 
-func scrapWatchlist(letterboxdUsername string, genres []string) []string {
+func scrapWatchlist(letterboxdUsername string, scrapperParams *ScrapperParams) []string {
 	filmCh := make(chan []string)
 
 	var wg sync.WaitGroup
@@ -40,11 +57,11 @@ func scrapWatchlist(letterboxdUsername string, genres []string) []string {
 		colly.AllowedDomains("letterboxd.com"),
 	)
 
-	var totalPages int
-
 	pageCollector.OnRequest(func(r *colly.Request) {
 		log.Infof("➡️ Visiting %s", r.URL.String())
 	})
+
+	var totalPages int
 
 	pageCollector.OnHTML("div.paginate-pages ul", func(e *colly.HTMLElement) {
 		e.ForEach("li.paginate-page a", func(_ int, el *colly.HTMLElement) {
@@ -54,10 +71,12 @@ func scrapWatchlist(letterboxdUsername string, genres []string) []string {
 			}
 		})
 
-		log.Infof("Total pages: %d", totalPages)
+		log.Infof("Total pages for user %s: %d", letterboxdUsername, totalPages)
 	})
 
-	err := pageCollector.Visit(buildWatchlistURL(letterboxdUsername, genres))
+	watchlistURL := buildWatchlistURL(letterboxdUsername, scrapperParams)
+
+	err := pageCollector.Visit(watchlistURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +87,9 @@ func scrapWatchlist(letterboxdUsername string, genres []string) []string {
 		wg.Add(1)
 		go func(page int) {
 			defer wg.Done()
+
 			c := colly.NewCollector(colly.AllowedDomains("letterboxd.com"))
+
 			var films []string
 
 			c.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
@@ -82,7 +103,8 @@ func scrapWatchlist(letterboxdUsername string, genres []string) []string {
 				log.Infof("➡️ Visiting page %d : %s", page, r.URL.String())
 			})
 
-			err := c.Visit(fmt.Sprintf("https://letterboxd.com/%s/watchlist/page/%d", letterboxdUsername, page))
+			pageURL := fmt.Sprintf("%s/page/%d", strings.TrimRight(watchlistURL, "/"), page)
+			err := c.Visit(pageURL)
 			if err != nil {
 				log.Errorf("Error on the page %d : %v", page, err)
 			}
@@ -108,19 +130,25 @@ func scrapWatchlist(letterboxdUsername string, genres []string) []string {
 	return watchlist
 }
 
-func buildWatchlistURL(username string, genres []string) string {
+func buildWatchlistURL(username string, scrapperParams *ScrapperParams) string {
 	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist/", username)
-	if len(genres) == 0 {
+	if len(scrapperParams.genres) == 0 {
 		return url
 	}
 
 	url += "genre/"
-	for i, genre := range genres {
+	for i, genre := range scrapperParams.genres {
 		url += genre
-		if i < len(genres)-1 {
+		if i < len(scrapperParams.genres)-1 {
 			url += "+"
 		}
 	}
+
+	if scrapperParams.platform == "" {
+		return url
+	}
+
+	url += fmt.Sprintf("/on/%s", scrapperParams.platform)
 
 	return url
 }

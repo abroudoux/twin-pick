@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -11,23 +12,12 @@ import (
 )
 
 func (s *server) handleMatch(c *gin.Context) {
-	usernamesParam := c.Param("usernames")
-	if usernamesParam == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Usernames parameter is required"})
+	scrapperParams, err := buildScrapperParams(c)
+	if err != nil {
 		return
 	}
 
-	usernames := strings.Split(usernamesParam, ",")
-	log.Infof("Matching watchlists for users: %v", usernames)
-
-	var genres []string
-	genresParam := c.Param("genres")
-	if genresParam != "" {
-		genres = strings.Split(genresParam, ",")
-		log.Infof("Filtering watchlists by genres: %v", genres)
-	}
-
-	watchlists := scrapper.ScrapUsersWachtlists(usernames, genres)
+	watchlists := scrapper.ScrapUsersWachtlists(scrapperParams)
 
 	commonFilms, err := match.GetCommonFilms(watchlists)
 	if err != nil {
@@ -49,4 +39,29 @@ func (s *server) handleMatch(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"selected_film": selectedFilm})
+}
+
+func buildScrapperParams(c *gin.Context) (*scrapper.ScrapperParams, error) {
+	usernamesParam := c.Query("usernames")
+	if usernamesParam == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameter 'usernames' is required (comma-separated list)"})
+		return nil, fmt.Errorf("missing usernames")
+	}
+
+	usernames := strings.Split(usernamesParam, ",")
+	log.Infof("Matching watchlists for users: %v", usernames)
+
+	var genres []string
+	genresParam := c.Query("genres")
+	if genresParam != "" {
+		genres = strings.Split(genresParam, ",")
+		log.Infof("Filtering watchlists by genres: %v", genres)
+	}
+
+	platform := c.Query("platform")
+	if platform != "" {
+		log.Infof("Filtering watchlists by platform: %v", platform)
+	}
+
+	return scrapper.NewScrapperParams(usernames, genres, platform), nil
 }

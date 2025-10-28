@@ -5,7 +5,8 @@
     "name": "find_common_film",
     "arguments": {
       "usernames": ["abroudoux", "potatoze"],
-      "genres": ["action"]
+      "genres": ["action"],
+      "platform": "netflix-fr"
     }
   }
 }
