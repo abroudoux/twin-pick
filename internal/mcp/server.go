@@ -30,6 +30,7 @@ type ToolCall struct {
 
 type FindCommonFilmArgs struct {
 	Usernames []string `json:"usernames"`
+	Genres    []string `json:"genres,omitempty"`
 }
 
 type Server struct{}
@@ -92,7 +93,7 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 		return
 	}
 
-	watchlists := scrapper.ScrapUsersWachtlists(args.Usernames)
+	watchlists := scrapper.ScrapUsersWachtlists(args.Usernames, args.Genres)
 	commonFilms, err := match.GetCommonFilms(watchlists)
 	if err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
@@ -109,6 +110,7 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 		ID: req.ID,
 		Result: map[string]interface{}{
 			"usernames":     args.Usernames,
+			"genres":        args.Genres,
 			"common_films":  commonFilms,
 			"selected_film": selectedFilm,
 		},

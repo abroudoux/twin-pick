@@ -9,7 +9,7 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-func ScrapUsersWachtlists(usernames []string) map[string][]string {
+func ScrapUsersWachtlists(usernames []string, genres []string) map[string][]string {
 	watchlists := make(map[string][]string)
 
 	var mu sync.Mutex
@@ -19,7 +19,7 @@ func ScrapUsersWachtlists(usernames []string) map[string][]string {
 		wg.Add(1)
 		go func(user string) {
 			defer wg.Done()
-			watchlist := scrapWatchlist(user)
+			watchlist := scrapWatchlist(user, genres)
 			mu.Lock()
 			watchlists[user] = watchlist
 			mu.Unlock()
@@ -31,7 +31,7 @@ func ScrapUsersWachtlists(usernames []string) map[string][]string {
 	return watchlists
 }
 
-func scrapWatchlist(letterboxdUsername string) []string {
+func scrapWatchlist(letterboxdUsername string, genres []string) []string {
 	filmCh := make(chan []string)
 
 	var wg sync.WaitGroup
@@ -57,7 +57,7 @@ func scrapWatchlist(letterboxdUsername string) []string {
 		log.Infof("Total pages: %d", totalPages)
 	})
 
-	err := pageCollector.Visit(fmt.Sprintf("https://letterboxd.com/%s/watchlist", letterboxdUsername))
+	err := pageCollector.Visit(buildWatchlistURL(letterboxdUsername, genres))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,4 +106,21 @@ func scrapWatchlist(letterboxdUsername string) []string {
 	}
 
 	return watchlist
+}
+
+func buildWatchlistURL(username string, genres []string) string {
+	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist/", username)
+	if len(genres) == 0 {
+		return url
+	}
+
+	url += "genre/"
+	for i, genre := range genres {
+		url += genre
+		if i < len(genres)-1 {
+			url += "+"
+		}
+	}
+
+	return url
 }

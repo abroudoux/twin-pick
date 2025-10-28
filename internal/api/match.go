@@ -20,7 +20,14 @@ func (s *server) handleMatch(c *gin.Context) {
 	usernames := strings.Split(usernamesParam, ",")
 	log.Infof("Matching watchlists for users: %v", usernames)
 
-	watchlists := scrapper.ScrapUsersWachtlists(usernames)
+	var genres []string
+	genresParam := c.Param("genres")
+	if genresParam != "" {
+		genres = strings.Split(genresParam, ",")
+		log.Infof("Filtering watchlists by genres: %v", genres)
+	}
+
+	watchlists := scrapper.ScrapUsersWachtlists(usernames, genres)
 
 	commonFilms, err := match.GetCommonFilms(watchlists)
 	if err != nil {

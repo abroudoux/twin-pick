@@ -3,6 +3,9 @@
   "method": "tools/call",
   "params": {
     "name": "find_common_film",
-    "arguments": { "usernames": ["abroudoux", "66Sceptre"] }
+    "arguments": {
+      "usernames": ["abroudoux", "potatoze"],
+      "genres": ["action"]
+    }
   }
 }
