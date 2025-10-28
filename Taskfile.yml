@@ -1,15 +1,53 @@
 version: "3"
 
 vars:
-  GREETING: Hello, World!
+  BINDIR: bin
 
 tasks:
-  build:
+  build:api:
+    desc: "Build Twinpick API server"
     cmds:
-      - go build -o bin/twinpick cmd/main.go
+      - go build -o {{.BINDIR}}/api cmd/api/main.go
+
+  build:mcp:
+    desc: "Build Twinpick MCP server"
+    cmds:
+      - go build -o {{.BINDIR}}/mcp cmd/mcp/main.go
+
+  build:all:
+    desc: "Build all Twinpick components"
+    deps:
+      - build:api
+      - build:mcp
+
+  run:api:
+    desc: "Start Twinpick API server"
+    deps:
+      - build:api
+    cmds:
+      - ./{{.BINDIR}}/api
+
+  run:mcp:
+    desc: "Start Twinpick MCP server"
+    deps:
+      - build:mcp
+    cmds:
+      - ./{{.BINDIR}}/mcp
+
+  run:all:
+    desc: "Start all Twinpick components"
+    deps:
+      - build:all
+    cmds:
+      - task run:api &
+      - task run:mcp
+
+  test:mcp:
+    desc: "Run tests for Twinpick MCP server"
+    cmds:
+      - cat testdata/request.json | ./bin/mcp | jq
 
   dev:
-    deps:
-      - build
+    desc: "Start Twinpick API server in development mode"
     cmds:
-      - ./bin/twinpick
+      - task: run:api
