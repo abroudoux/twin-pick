@@ -2,15 +2,15 @@ package scrapper
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"sync"
 
+	"github.com/charmbracelet/log"
 	"github.com/gocolly/colly/v2"
 )
 
-func ScrapUsers(usernames []string) map[string][]*string {
-	allMovies := make(map[string][]*string)
+func ScrapUsersWachtlists(usernames []string) map[string][]string {
+	watchlists := make(map[string][]string)
 
 	var mu sync.Mutex
 	var wg sync.WaitGroup
@@ -19,20 +19,21 @@ func ScrapUsers(usernames []string) map[string][]*string {
 		wg.Add(1)
 		go func(user string) {
 			defer wg.Done()
-			userMovies := scrapUser(user)
+			watchlist := scrapWatchlist(user)
 			mu.Lock()
-			allMovies[user] = userMovies
+			watchlists[user] = watchlist
 			mu.Unlock()
 		}(username)
 	}
 
 	wg.Wait()
 
-	return allMovies
+	return watchlists
 }
 
-func scrapUser(letterboxdUsername string) []*string {
-	movieCh := make(chan []string)
+func scrapWatchlist(letterboxdUsername string) []string {
+	filmCh := make(chan []string)
+
 	var wg sync.WaitGroup
 
 	pageCollector := colly.NewCollector(
@@ -42,7 +43,7 @@ func scrapUser(letterboxdUsername string) []*string {
 	var totalPages int
 
 	pageCollector.OnRequest(func(r *colly.Request) {
-		fmt.Println("➡️ Visiting", r.URL.String())
+		log.Infof("➡️ Visiting %s", r.URL.String())
 	})
 
 	pageCollector.OnHTML("div.paginate-pages ul", func(e *colly.HTMLElement) {
@@ -53,7 +54,7 @@ func scrapUser(letterboxdUsername string) []*string {
 			}
 		})
 
-		fmt.Println("Total pages:", totalPages)
+		log.Infof("Total pages: %d", totalPages)
 	})
 
 	err := pageCollector.Visit(fmt.Sprintf("https://letterboxd.com/%s/watchlist", letterboxdUsername))
@@ -68,41 +69,41 @@ func scrapUser(letterboxdUsername string) []*string {
 		go func(page int) {
 			defer wg.Done()
 			c := colly.NewCollector(colly.AllowedDomains("letterboxd.com"))
-			var movies []string
+			var films []string
 
 			c.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
-				movieName := e.ChildAttr("div.react-component", "data-item-full-display-name")
-				if movieName != "" {
-					movies = append(movies, movieName)
+				filmName := e.ChildAttr("div.react-component", "data-item-full-display-name")
+				if filmName != "" {
+					films = append(films, filmName)
 				}
 			})
 
 			c.OnRequest(func(r *colly.Request) {
-				fmt.Println("➡️ Visiting page", page, ":", r.URL.String())
+				log.Infof("➡️ Visiting page %d : %s", page, r.URL.String())
 			})
 
 			err := c.Visit(fmt.Sprintf("https://letterboxd.com/%s/watchlist/page/%d", letterboxdUsername, page))
 			if err != nil {
-				log.Println("Error on the page ", page, ":", err)
+				log.Errorf("Error on the page %d : %v", page, err)
 			}
 
 			c.Wait()
-			movieCh <- movies
+			filmCh <- films
 		}(i)
 	}
 
 	go func() {
 		wg.Wait()
-		close(movieCh)
+		close(filmCh)
 	}()
 
-	var movies []*string
+	var watchlist []string
 
-	for ch := range movieCh {
-		for _, movie := range ch {
-			movies = append(movies, &movie)
+	for ch := range filmCh {
+		for _, film := range ch {
+			watchlist = append(watchlist, film)
 		}
 	}
 
-	return movies
+	return watchlist
 }
