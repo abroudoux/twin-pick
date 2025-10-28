@@ -7,17 +7,17 @@ tasks:
   build:api:
     desc: "Build Twinpick API server"
     cmds:
-      - go build -o {{.BINDIR}}/api cmd/api/api.go
+      - go build -o {{.BINDIR}}/api cmd/api/main.go
 
   build:mcp:
     desc: "Build Twinpick MCP server"
     cmds:
-      - go build -o {{.BINDIR}}/mcp cmd/mcp/mcp.go
+      - go build -o {{.BINDIR}}/mcp cmd/mcp/main.go
 
   build:cli:
     desc: "Build Twinpick CLI"
     cmds:
-      - go build -o {{.BINDIR}}/cli cmd/cli/cli.go
+      - go build -o {{.BINDIR}}/cli cmd/cli/main.go
 
   build:all:
     desc: "Build all Twinpick components"
