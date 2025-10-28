@@ -19,9 +19,7 @@ func NewServer(matchService *application.MatchService) *Server {
 
 func (s *Server) Run() {
 	r := gin.Default()
-
 	s.registerRoutes(r)
-
 	r.Run(":8080")
 }
 

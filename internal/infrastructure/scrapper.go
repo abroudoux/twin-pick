@@ -17,7 +17,7 @@ func NewLetterboxdScrapper() *LetterboxdScrapper {
 }
 
 func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.ScrapperParams) (domain.Watchlist, error) {
-	var films []domain.Film
+	var watchlist domain.Watchlist
 	var totalPages int
 
 	pageCollector := colly.NewCollector(colly.AllowedDomains("letterboxd.com"))
@@ -28,12 +28,15 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.Scrappe
 			}
 		})
 	})
+
 	watchlistURL := buildWatchlistURL(username, params)
+
 	_ = pageCollector.Visit(watchlistURL)
 	pageCollector.Wait()
 
 	filmCh := make(chan []domain.Film)
 	var wg sync.WaitGroup
+
 	for i := 1; i <= totalPages; i++ {
 		wg.Add(1)
 		go func(page int) {
@@ -58,11 +61,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.Scrappe
 	}()
 
 	for fs := range filmCh {
-		films = append(films, fs...)
-	}
-
-	watchlist := domain.Watchlist{
-		Films: films,
+		watchlist.Films = append(watchlist.Films, fs...)
 	}
 
 	return watchlist, nil
