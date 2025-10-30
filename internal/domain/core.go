@@ -18,6 +18,13 @@ func NewFilm(name string) Film {
 	}
 }
 
+func NewScrapperParams(genres []string, platform string) *ScrapperParams {
+	return &ScrapperParams{
+		Genres:   genres,
+		Platform: platform,
+	}
+}
+
 func GetCommonFilms(watchlists map[string]*Watchlist) ([]Film, error) {
 	if len(watchlists) == 0 {
 		return nil, errors.New("no watchlists provided")

@@ -54,12 +54,9 @@ func runMatch(cmd *cobra.Command, args []string) error {
 		genreList = strings.Split(genres, ",")
 	}
 
-	params := domain.ScrapperParams{
-		Genres:   genreList,
-		Platform: platform,
-	}
+	params := domain.NewScrapperParams(genreList, platform)
 
-	film, err := service.FindCommonFilm(userList, params)
+	film, err := service.MatchFilm(userList, params)
 	if err != nil {
 		return err
 	}

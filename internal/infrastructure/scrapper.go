@@ -17,7 +17,7 @@ func NewLetterboxdScrapper() *LetterboxdScrapper {
 	return &LetterboxdScrapper{}
 }
 
-func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.ScrapperParams) (*domain.Watchlist, error) {
+func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperParams) (*domain.Watchlist, error) {
 	watchlist := domain.NewWatchlist(username)
 	var totalPages int
 
@@ -71,7 +71,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.Scrappe
 	return watchlist, nil
 }
 
-func buildWatchlistURL(username string, params domain.ScrapperParams) string {
+func buildWatchlistURL(username string, params *domain.ScrapperParams) string {
 	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist/", username)
 
 	if len(params.Genres) > 0 {

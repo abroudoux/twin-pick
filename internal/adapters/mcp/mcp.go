@@ -96,12 +96,9 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 		return
 	}
 
-	params := domain.ScrapperParams{
-		Genres:   args.Genres,
-		Platform: args.Platform,
-	}
+	params := domain.NewScrapperParams(args.Genres, args.Platform)
 
-	film, err := s.Service.FindCommonFilm(args.Usernames, params)
+	film, err := s.Service.MatchFilm(args.Usernames, params)
 	if err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
 		return
