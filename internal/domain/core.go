@@ -5,7 +5,20 @@ import (
 	"math/rand"
 )
 
-func GetCommonFilms(watchlists map[string]Watchlist) ([]Film, error) {
+func NewWatchlist(username string) *Watchlist {
+	return &Watchlist{
+		Username: username,
+		Films:    []Film{},
+	}
+}
+
+func NewFilm(name string) Film {
+	return Film{
+		Name: name,
+	}
+}
+
+func GetCommonFilms(watchlists map[string]*Watchlist) ([]Film, error) {
 	if len(watchlists) == 0 {
 		return nil, errors.New("no watchlists provided")
 	}
@@ -21,14 +34,14 @@ func GetCommonFilms(watchlists map[string]Watchlist) ([]Film, error) {
 		}
 	}
 
-	var common []Film
+	var commonFilms []Film
 	for name, count := range filmCount {
 		if count == len(watchlists) {
-			common = append(common, Film{Name: name})
+			commonFilms = append(commonFilms, NewFilm(name))
 		}
 	}
 
-	return common, nil
+	return commonFilms, nil
 }
 
 func SelectRandomFilm(films []Film) (Film, error) {

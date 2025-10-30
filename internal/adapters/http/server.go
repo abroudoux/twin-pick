@@ -32,9 +32,18 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 
 func (s *Server) handleMatch(c *gin.Context) {
 	usernames := strings.Split(c.Query("usernames"), ",")
+
+	rawGenres := strings.Split(c.Query("genres"), ",")
+	var genres []string
+	for _, g := range rawGenres {
+		if trimmed := strings.TrimSpace(g); trimmed != "" {
+			genres = append(genres, trimmed)
+		}
+	}
+
 	params := domain.ScrapperParams{
-		Genres:   strings.Split(c.Query("genres"), ","),
-		Platform: c.Query("platform"),
+		Genres:   genres,
+		Platform: strings.TrimSpace(c.Query("platform")),
 	}
 
 	film, err := s.matchService.FindCommonFilm(usernames, params)

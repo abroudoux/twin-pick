@@ -5,8 +5,8 @@ type Film struct {
 }
 
 type Watchlist struct {
-	User  string
-	Films []Film
+	Username string
+	Films    []Film
 }
 
 type ScrapperParams struct {

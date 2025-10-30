@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/abroudoux/twinpick/internal/domain"
+	"github.com/charmbracelet/log"
 	"github.com/gocolly/colly/v2"
 )
 
@@ -16,8 +17,8 @@ func NewLetterboxdScrapper() *LetterboxdScrapper {
 	return &LetterboxdScrapper{}
 }
 
-func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.ScrapperParams) (domain.Watchlist, error) {
-	var watchlist domain.Watchlist
+func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.ScrapperParams) (*domain.Watchlist, error) {
+	watchlist := domain.NewWatchlist(username)
 	var totalPages int
 
 	pageCollector := colly.NewCollector(colly.AllowedDomains("letterboxd.com"))
@@ -30,6 +31,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.Scrappe
 	})
 
 	watchlistURL := buildWatchlistURL(username, params)
+	log.Infof("Visiting watchlist URL: %s", watchlistURL)
 
 	_ = pageCollector.Visit(watchlistURL)
 	pageCollector.Wait()
@@ -60,6 +62,8 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.Scrappe
 		close(filmCh)
 	}()
 
+	watchlist.Username = username
+
 	for fs := range filmCh {
 		watchlist.Films = append(watchlist.Films, fs...)
 	}
@@ -69,11 +73,16 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params domain.Scrappe
 
 func buildWatchlistURL(username string, params domain.ScrapperParams) string {
 	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist/", username)
+
 	if len(params.Genres) > 0 {
 		url += "genre/" + strings.Join(params.Genres, "+") + "/"
 	}
+
 	if params.Platform != "" {
 		url += fmt.Sprintf("on/%s/", params.Platform)
 	}
+
+	url = strings.TrimRight(url, "/")
+
 	return url
 }

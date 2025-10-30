@@ -1,6 +1,9 @@
 package application
 
-import "github.com/abroudoux/twinpick/internal/domain"
+import (
+	"github.com/abroudoux/twinpick/internal/domain"
+	"github.com/charmbracelet/log"
+)
 
 type MatchService struct {
 	Provider domain.WatchlistProvider
@@ -11,7 +14,7 @@ func NewMatchService(provider domain.WatchlistProvider) *MatchService {
 }
 
 func (s *MatchService) FindCommonFilm(usernames []string, params domain.ScrapperParams) (domain.Film, error) {
-	watchlists := make(map[string]domain.Watchlist)
+	watchlists := make(map[string]*domain.Watchlist)
 	for _, user := range usernames {
 		wl, err := s.Provider.GetWatchlist(user, params)
 		if err != nil {
@@ -20,10 +23,14 @@ func (s *MatchService) FindCommonFilm(usernames []string, params domain.Scrapper
 		watchlists[user] = wl
 	}
 
-	common, err := domain.GetCommonFilms(watchlists)
+	commonFilms, err := domain.GetCommonFilms(watchlists)
 	if err != nil {
 		return domain.Film{}, err
 	}
 
-	return domain.SelectRandomFilm(common)
+	for _, f := range commonFilms {
+		log.Infof("Common film: %s", f.Name)
+	}
+
+	return domain.SelectRandomFilm(commonFilms)
 }
