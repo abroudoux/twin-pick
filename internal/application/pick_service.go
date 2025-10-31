@@ -14,7 +14,7 @@ func NewPickService(wp domain.WatchlistProvider) *PickService {
 	return &PickService{WatchlistProvider: wp}
 }
 
-func (s *PickService) Pick(usernames []string, sp *domain.ScrapperParams, limit int) ([]domain.Film, error) {
+func (s *PickService) Pick(pp *domain.ProgramParams) ([]domain.Film, error) {
 	var (
 		mu         sync.Mutex
 		wg         sync.WaitGroup
@@ -22,12 +22,12 @@ func (s *PickService) Pick(usernames []string, sp *domain.ScrapperParams, limit 
 		firstError error
 	)
 
-	for _, user := range usernames {
+	for _, user := range pp.Usernames {
 		wg.Add(1)
 		go func(username string) {
 			defer wg.Done()
 
-			wl, err := s.WatchlistProvider.GetWatchlist(username, sp)
+			wl, err := s.WatchlistProvider.GetWatchlist(username, pp.ScrapperParams)
 			if err != nil {
 				mu.Lock()
 				if firstError == nil {
@@ -49,13 +49,13 @@ func (s *PickService) Pick(usernames []string, sp *domain.ScrapperParams, limit 
 		return nil, firstError
 	}
 
-	commonFilms, err := domain.GetCommonFilms(watchlists)
+	commonFilms, err := domain.CompareWatchlists(watchlists)
 	if err != nil {
 		return nil, err
 	}
 
-	if limit > 0 && len(commonFilms) > limit {
-		commonFilms = commonFilms[:limit]
+	if pp.Limit > 0 && len(commonFilms) > pp.Limit {
+		commonFilms = commonFilms[:pp.Limit]
 	}
 
 	return commonFilms, nil

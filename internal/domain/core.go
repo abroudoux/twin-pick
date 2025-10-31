@@ -25,7 +25,15 @@ func NewScrapperParams(genres []string, platform string) *ScrapperParams {
 	}
 }
 
-func GetCommonFilms(watchlists map[string]*Watchlist) ([]Film, error) {
+func NewProgramParams(usernames []string, scrapperParams *ScrapperParams, limit int) *ProgramParams {
+	return &ProgramParams{
+		Usernames:      usernames,
+		ScrapperParams: scrapperParams,
+		Limit:          limit,
+	}
+}
+
+func CompareWatchlists(watchlists map[string]*Watchlist) ([]Film, error) {
 	if len(watchlists) == 0 {
 		return nil, errors.New("no watchlists provided")
 	}

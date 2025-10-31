@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,10 +34,25 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 }
 
 func (s *Server) handlePick(c *gin.Context) {
+	params, err := returnProgramParams(c)
+	if err != nil {
+		return
+	}
+
+	films, err := s.PickService.Pick(params)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"films": films})
+}
+
+func returnProgramParams(c *gin.Context) (*domain.ProgramParams, error) {
 	usernames := strings.Split(c.Query("usernames"), ",")
 	if len(usernames) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "--usernames is required"})
-		return
+		return nil, fmt.Errorf("usernames is required")
 	}
 
 	rawGenres := strings.Split(c.Query("genres"), ",")
@@ -56,13 +72,6 @@ func (s *Server) handlePick(c *gin.Context) {
 		}
 	}
 
-	params := domain.NewScrapperParams(genres, platform)
-
-	films, err := s.PickService.Pick(usernames, params, limit)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"films": films})
+	scrapperParams := domain.NewScrapperParams(genres, platform)
+	return domain.NewProgramParams(usernames, scrapperParams, limit), nil
 }
