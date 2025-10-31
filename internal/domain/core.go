@@ -14,7 +14,7 @@ func NewWatchlist(username string) *Watchlist {
 
 func NewFilm(name string) Film {
 	return Film{
-		Name: name,
+		Title: name,
 	}
 }
 
@@ -34,9 +34,9 @@ func GetCommonFilms(watchlists map[string]*Watchlist) ([]Film, error) {
 	for _, wl := range watchlists {
 		seen := make(map[string]bool)
 		for _, f := range wl.Films {
-			if !seen[f.Name] {
-				filmCount[f.Name]++
-				seen[f.Name] = true
+			if !seen[f.Title] {
+				filmCount[f.Title]++
+				seen[f.Title] = true
 			}
 		}
 	}

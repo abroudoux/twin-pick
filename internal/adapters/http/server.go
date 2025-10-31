@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/abroudoux/twinpick/internal/application"
 	"github.com/abroudoux/twinpick/internal/domain"
-	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
@@ -53,7 +54,7 @@ func (s *Server) handleMatch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"selected_film": film.Name})
+	c.JSON(http.StatusOK, gin.H{"selected_film": film.Title})
 }
 
 func (s *Server) handleCommon(c *gin.Context) {

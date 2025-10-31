@@ -28,18 +28,19 @@ type ToolCall struct {
 	Arguments json.RawMessage `json:"arguments"`
 }
 
-type FindCommonFilmArgs struct {
+type ProgramArgs struct {
 	Usernames []string `json:"usernames"`
 	Genres    []string `json:"genres,omitempty"`
 	Platform  string   `json:"platform,omitempty"`
 }
 
 type Server struct {
-	Service *application.MatchService
+	MatchService  *application.MatchService
+	CommonService *application.CommonService
 }
 
-func NewServer(service *application.MatchService) *Server {
-	return &Server{Service: service}
+func NewServer(m *application.MatchService, c *application.CommonService) *Server {
+	return &Server{MatchService: m, CommonService: c}
 }
 
 func (s *Server) Run() {
@@ -82,15 +83,17 @@ func (s *Server) handleToolCall(req Request, encoder *json.Encoder) {
 	}
 
 	switch call.Name {
-	case "find_common_film":
-		s.handleFindCommonFilm(req, call, encoder)
+	case "match_film":
+		s.handleMatchFilm(req, call, encoder)
+	case "common_films":
+		s.handleCommonFilms(req, call, encoder)
 	default:
 		encoder.Encode(Response{ID: req.ID, Error: "Unknown tool"})
 	}
 }
 
-func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.Encoder) {
-	var args FindCommonFilmArgs
+func (s *Server) handleMatchFilm(req Request, call ToolCall, encoder *json.Encoder) {
+	var args ProgramArgs
 	if err := json.Unmarshal(call.Arguments, &args); err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
 		return
@@ -98,7 +101,7 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 
 	params := domain.NewScrapperParams(args.Genres, args.Platform)
 
-	film, err := s.Service.MatchFilm(args.Usernames, params)
+	film, err := s.MatchService.MatchFilm(args.Usernames, params)
 	if err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
 		return
@@ -110,7 +113,33 @@ func (s *Server) handleFindCommonFilm(req Request, call ToolCall, encoder *json.
 			"usernames":     args.Usernames,
 			"genres":        args.Genres,
 			"platform":      args.Platform,
-			"selected_film": film.Name,
+			"selected_film": film.Title,
+		},
+	})
+}
+
+func (s *Server) handleCommonFilms(req Request, call ToolCall, encoder *json.Encoder) {
+	var args ProgramArgs
+	if err := json.Unmarshal(call.Arguments, &args); err != nil {
+		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
+		return
+	}
+
+	params := domain.NewScrapperParams(args.Genres, args.Platform)
+
+	films, err := s.CommonService.GetCommonFilms(args.Usernames, params)
+	if err != nil {
+		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
+		return
+	}
+
+	encoder.Encode(Response{
+		ID: req.ID,
+		Result: map[string]interface{}{
+			"usernames":    args.Usernames,
+			"genres":       args.Genres,
+			"platform":     args.Platform,
+			"common_films": films,
 		},
 	})
 }

@@ -9,5 +9,7 @@ import (
 func main() {
 	provider := infrastructure.NewLetterboxdScrapper()
 	matchService := application.NewMatchService(provider)
-	cli.Execute(matchService)
+	commonService := application.NewCommonService(provider)
+
+	cli.Execute(matchService, commonService)
 }

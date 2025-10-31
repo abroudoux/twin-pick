@@ -3,8 +3,9 @@ package application
 import (
 	"sync"
 
-	"github.com/abroudoux/twinpick/internal/domain"
 	"github.com/charmbracelet/log"
+
+	"github.com/abroudoux/twinpick/internal/domain"
 )
 
 type CommonService struct {
@@ -65,7 +66,7 @@ func (s *CommonService) GetCommonFilms(usernames []string, params *domain.Scrapp
 	}
 
 	for _, f := range commonFilms {
-		log.Infof("Common film: %s", f.Name)
+		log.Infof("Common film: %s", f.Title)
 	}
 
 	return commonFilms, nil

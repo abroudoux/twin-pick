@@ -1,7 +1,7 @@
 package domain
 
 type Film struct {
-	Name string
+	Title string
 }
 
 type Watchlist struct {

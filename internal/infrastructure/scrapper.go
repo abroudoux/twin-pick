@@ -6,9 +6,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/abroudoux/twinpick/internal/domain"
 	"github.com/charmbracelet/log"
 	"github.com/gocolly/colly/v2"
+
+	"github.com/abroudoux/twinpick/internal/domain"
 )
 
 type LetterboxdScrapper struct{}
@@ -47,8 +48,8 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 
 			var pageFilms []domain.Film
 			c.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
-				if name := e.ChildAttr("div.react-component", "data-item-full-display-name"); name != "" {
-					pageFilms = append(pageFilms, domain.Film{Name: name})
+				if title := e.ChildAttr("div.react-component", "data-item-full-display-name"); title != "" {
+					pageFilms = append(pageFilms, domain.Film{Title: title})
 				}
 			})
 			_ = c.Visit(fmt.Sprintf("%s/page/%d", strings.TrimRight(watchlistURL, "/"), page))
