@@ -13,20 +13,19 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "twinpick",
-	Short: "Twinpick CLI : find the perfect film based on your Letterboxd Watchlists",
+	Short: "Twinpick CLI: pick films based on Letterboxd watchlists",
 }
 
 var (
-	usernames     string
-	genres        string
-	platform      string
-	matchService  *application.MatchService
-	commonService *application.CommonService
+	usernames   string
+	genres      string
+	platform    string
+	limit       int
+	pickService *application.PickService
 )
 
-func Execute(m *application.MatchService, c *application.CommonService) {
-	matchService = m
-	commonService = c
+func Execute(ps *application.PickService) {
+	pickService = ps
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
@@ -34,31 +33,21 @@ func Execute(m *application.MatchService, c *application.CommonService) {
 }
 
 func init() {
-	matchCmd := &cobra.Command{
-		Use:   "match",
-		Short: "Find a movie based on users' Letterboxd watchlists",
-		RunE:  runMatch,
+	pickCmd := &cobra.Command{
+		Use:   "pick",
+		Short: "Pick films from users' watchlists",
+		RunE:  runPick,
 	}
 
-	commonCmd := &cobra.Command{
-		Use:   "common",
-		Short: "Find common movies in users' Letterboxd watchlists",
-		RunE:  runCommon,
-	}
+	pickCmd.Flags().StringVar(&usernames, "usernames", "", "Comma-separated Letterboxd usernames (required)")
+	pickCmd.Flags().StringVar(&genres, "genres", "", "Optional genres, comma-separated")
+	pickCmd.Flags().StringVar(&platform, "platform", "", "Optional platform, e.g., netflix-fr")
+	pickCmd.Flags().IntVar(&limit, "limit", 0, "Limit number of films returned (0 = all)")
 
-	matchCmd.Flags().StringVar(&usernames, "usernames", "", "Comma-separated Letterboxd usernames (required)")
-	matchCmd.Flags().StringVar(&genres, "genres", "", "Optional genres, comma-separated")
-	matchCmd.Flags().StringVar(&platform, "platform", "", "Optional platform, e.g., netflix-fr")
-
-	commonCmd.Flags().StringVar(&usernames, "usernames", "", "Comma-separated Letterboxd usernames (required)")
-	commonCmd.Flags().StringVar(&genres, "genres", "", "Optional genres, comma-separated")
-	commonCmd.Flags().StringVar(&platform, "platform", "", "Optional platform, e.g., netflix-fr")
-
-	rootCmd.AddCommand(matchCmd)
-	rootCmd.AddCommand(commonCmd)
+	rootCmd.AddCommand(pickCmd)
 }
 
-func runMatch(cmd *cobra.Command, args []string) error {
+func runPick(cmd *cobra.Command, args []string) error {
 	if usernames == "" {
 		return fmt.Errorf("--usernames is required")
 	}
@@ -66,36 +55,28 @@ func runMatch(cmd *cobra.Command, args []string) error {
 	userList := strings.Split(usernames, ",")
 	genreList := []string{}
 	if genres != "" {
-		genreList = strings.Split(genres, ",")
+		for _, g := range strings.Split(genres, ",") {
+			if trimmed := strings.TrimSpace(g); trimmed != "" {
+				genreList = append(genreList, trimmed)
+			}
+		}
 	}
 
 	params := domain.NewScrapperParams(genreList, platform)
 
-	film, err := matchService.MatchFilm(userList, params)
+	films, err := pickService.Pick(userList, params, limit)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("🎬 Selected film: %s", film.Title)
-	return nil
-}
-
-func runCommon(cmd *cobra.Command, args []string) error {
-	if usernames == "" {
-		return fmt.Errorf("--usernames is required")
+	if len(films) == 0 {
+		log.Infof("No common films found for the given users/filters.")
+		return nil
 	}
 
-	userList := strings.Split(usernames, ",")
-	genreList := []string{}
-	if genres != "" {
-		genreList = strings.Split(genres, ",")
-	}
-
-	params := domain.NewScrapperParams(genreList, platform)
-
-	_, err := commonService.GetCommonFilms(userList, params)
-	if err != nil {
-		return err
+	log.Infof("🎬 Picked films:")
+	for i, f := range films {
+		log.Infof("%d. %s", i+1, f.Title)
 	}
 
 	return nil

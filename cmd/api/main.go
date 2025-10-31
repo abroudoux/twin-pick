@@ -8,9 +8,8 @@ import (
 
 func main() {
 	provider := infrastructure.NewLetterboxdScrapper()
-	matchService := application.NewMatchService(provider)
-	commonService := application.NewCommonService(provider)
+	pickService := application.NewPickService(provider)
 
-	server := http.NewServer(matchService, commonService)
+	server := http.NewServer(pickService)
 	server.Run()
 }

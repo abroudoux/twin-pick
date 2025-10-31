@@ -55,15 +55,10 @@ tasks:
       - task run:api &
       - task run:mcp
 
-  test:mcp:match:
+  test:mcp:
     desc: "Run tests for Twinpick MCP server"
     cmds:
-      - cat testdata/request_match.json | ./bin/mcp | jq
-
-  test:mcp:common:
-    desc: "Run tests for Twinpick MCP server"
-    cmds:
-      - cat testdata/request_common.json | ./bin/mcp | jq
+      - cat testdata/request.json | ./bin/mcp | jq
 
   dev:
     desc: "Start Twinpick API server in development mode"

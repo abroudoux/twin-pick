@@ -1,7 +1,6 @@
 package mcp
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -32,46 +31,63 @@ type ProgramArgs struct {
 	Usernames []string `json:"usernames"`
 	Genres    []string `json:"genres,omitempty"`
 	Platform  string   `json:"platform,omitempty"`
+	Limit     int      `json:"limit,omitempty"`
 }
 
 type Server struct {
-	MatchService  *application.MatchService
-	CommonService *application.CommonService
+	PickService *application.PickService
 }
 
-func NewServer(m *application.MatchService, c *application.CommonService) *Server {
-	return &Server{MatchService: m, CommonService: c}
+func NewServer(ps *application.PickService) *Server {
+	return &Server{PickService: ps}
 }
 
 func (s *Server) Run() {
-	reader := bufio.NewReader(os.Stdin)
-	encoder := json.NewEncoder(os.Stdout)
-
-	input, err := io.ReadAll(reader)
+	input, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
-		return
-	}
-
-	if len(input) == 0 {
-		encoder.Encode(Response{Error: "Empty input"})
+		fmt.Fprintf(os.Stderr, "Error reading stdin: %v\n", err)
 		return
 	}
 
 	var req Request
 	if err := json.Unmarshal(input, &req); err != nil {
-		encoder.Encode(Response{Error: fmt.Sprintf("Invalid JSON: %v", err)})
+		fmt.Fprintf(os.Stderr, "Invalid JSON: %v\n", err)
 		return
 	}
 
-	switch req.Method {
-	case "tools/call":
-		s.handleToolCall(req, encoder)
+	var call ToolCall
+	if err := json.Unmarshal(req.Params, &call); err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid params: %v\n", err)
+		return
+	}
+
+	switch call.Name {
+	case "pick":
+		var args ProgramArgs
+		if err := json.Unmarshal(call.Arguments, &args); err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid arguments: %v\n", err)
+			return
+		}
+
+		params := domain.NewScrapperParams(args.Genres, args.Platform)
+		films, err := s.PickService.Pick(args.Usernames, params, args.Limit)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Pick error: %v\n", err)
+			return
+		}
+
+		resp := Response{
+			ID: req.ID,
+			Result: map[string]interface{}{
+				"usernames": args.Usernames,
+				"genres":    args.Genres,
+				"platform":  args.Platform,
+				"films":     films,
+			},
+		}
+		json.NewEncoder(os.Stdout).Encode(resp)
 	default:
-		encoder.Encode(Response{
-			ID:    req.ID,
-			Error: fmt.Sprintf("Invalid method: %s", req.Method),
-		})
+		json.NewEncoder(os.Stdout).Encode(Response{ID: req.ID, Error: "Unknown tool"})
 	}
 }
 
@@ -83,16 +99,14 @@ func (s *Server) handleToolCall(req Request, encoder *json.Encoder) {
 	}
 
 	switch call.Name {
-	case "match_film":
-		s.handleMatchFilm(req, call, encoder)
-	case "common_films":
-		s.handleCommonFilms(req, call, encoder)
+	case "pick":
+		s.handlePick(req, call, encoder)
 	default:
 		encoder.Encode(Response{ID: req.ID, Error: "Unknown tool"})
 	}
 }
 
-func (s *Server) handleMatchFilm(req Request, call ToolCall, encoder *json.Encoder) {
+func (s *Server) handlePick(req Request, call ToolCall, encoder *json.Encoder) {
 	var args ProgramArgs
 	if err := json.Unmarshal(call.Arguments, &args); err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
@@ -101,7 +115,7 @@ func (s *Server) handleMatchFilm(req Request, call ToolCall, encoder *json.Encod
 
 	params := domain.NewScrapperParams(args.Genres, args.Platform)
 
-	film, err := s.MatchService.MatchFilm(args.Usernames, params)
+	films, err := s.PickService.Pick(args.Usernames, params, args.Limit)
 	if err != nil {
 		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
 		return
@@ -110,36 +124,10 @@ func (s *Server) handleMatchFilm(req Request, call ToolCall, encoder *json.Encod
 	encoder.Encode(Response{
 		ID: req.ID,
 		Result: map[string]interface{}{
-			"usernames":     args.Usernames,
-			"genres":        args.Genres,
-			"platform":      args.Platform,
-			"selected_film": film.Title,
-		},
-	})
-}
-
-func (s *Server) handleCommonFilms(req Request, call ToolCall, encoder *json.Encoder) {
-	var args ProgramArgs
-	if err := json.Unmarshal(call.Arguments, &args); err != nil {
-		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
-		return
-	}
-
-	params := domain.NewScrapperParams(args.Genres, args.Platform)
-
-	films, err := s.CommonService.GetCommonFilms(args.Usernames, params)
-	if err != nil {
-		encoder.Encode(Response{ID: req.ID, Error: err.Error()})
-		return
-	}
-
-	encoder.Encode(Response{
-		ID: req.ID,
-		Result: map[string]interface{}{
-			"usernames":    args.Usernames,
-			"genres":       args.Genres,
-			"platform":     args.Platform,
-			"common_films": films,
+			"usernames": args.Usernames,
+			"genres":    args.Genres,
+			"platform":  args.Platform,
+			"films":     films,
 		},
 	})
 }

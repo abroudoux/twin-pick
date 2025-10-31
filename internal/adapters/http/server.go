@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -11,12 +12,11 @@ import (
 )
 
 type Server struct {
-	matchService  *application.MatchService
-	commonService *application.CommonService
+	PickService *application.PickService
 }
 
-func NewServer(matchService *application.MatchService, commonService *application.CommonService) *Server {
-	return &Server{matchService: matchService, commonService: commonService}
+func NewServer(ps *application.PickService) *Server {
+	return &Server{PickService: ps}
 }
 
 func (s *Server) Run() {
@@ -29,12 +29,15 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	v1 := api.Group("/v1")
 
-	v1.GET("/match", s.handleMatch)
-	v1.GET("/common", s.handleCommon)
+	v1.GET("/pick", s.handlePick)
 }
 
-func (s *Server) handleMatch(c *gin.Context) {
+func (s *Server) handlePick(c *gin.Context) {
 	usernames := strings.Split(c.Query("usernames"), ",")
+	if len(usernames) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "--usernames is required"})
+		return
+	}
 
 	rawGenres := strings.Split(c.Query("genres"), ",")
 	var genres []string
@@ -46,37 +49,20 @@ func (s *Server) handleMatch(c *gin.Context) {
 
 	platform := c.Query("platform")
 
-	params := domain.NewScrapperParams(genres, platform)
-
-	film, err := s.matchService.MatchFilm(usernames, params)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"selected_film": film.Title})
-}
-
-func (s *Server) handleCommon(c *gin.Context) {
-	usernames := strings.Split(c.Query("usernames"), ",")
-
-	rawGenres := strings.Split(c.Query("genres"), ",")
-	var genres []string
-	for _, g := range rawGenres {
-		if trimmed := strings.TrimSpace(g); trimmed != "" {
-			genres = append(genres, trimmed)
+	limit := 0
+	if l := c.Query("limit"); l != "" {
+		if v, err := strconv.Atoi(l); err == nil && v > 0 {
+			limit = v
 		}
 	}
 
-	platform := c.Query("platform")
-
 	params := domain.NewScrapperParams(genres, platform)
 
-	films, err := s.commonService.GetCommonFilms(usernames, params)
+	films, err := s.PickService.Pick(usernames, params, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"common_films": films})
+	c.JSON(http.StatusOK, gin.H{"films": films})
 }

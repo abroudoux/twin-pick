@@ -2,11 +2,12 @@
   "id": 1,
   "method": "tools/call",
   "params": {
-    "name": "match_film",
+    "name": "pick",
     "arguments": {
       "usernames": ["abroudoux", "potatoze"],
       "genres": ["action"],
-      "platform": "netflix-fr"
+      "platform": "netflix-fr",
+      "limit": 3
     }
   }
 }
