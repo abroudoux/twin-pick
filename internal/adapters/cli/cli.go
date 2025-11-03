@@ -62,9 +62,9 @@ func runPick(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	programParams := domain.NewProgramParams(userList, domain.NewScrapperParams(genreList, platform), limit)
+	pickParams := domain.NewPickParams(userList, domain.NewScrapperParams(genreList, platform), limit)
 
-	films, err := pickService.Pick(programParams)
+	films, err := pickService.Pick(pickParams)
 	if err != nil {
 		return err
 	}

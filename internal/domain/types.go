@@ -14,7 +14,7 @@ type ScrapperParams struct {
 	Platform string
 }
 
-type ProgramParams struct {
+type PickParams struct {
 	Usernames      []string
 	ScrapperParams *ScrapperParams
 	Limit          int
