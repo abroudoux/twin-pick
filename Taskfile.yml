@@ -2,6 +2,7 @@ version: "3"
 
 vars:
   BINDIR: bin
+  TESTSDIR: tests
 
 tasks:
   build:api:
@@ -55,12 +56,29 @@ tasks:
       - task run:api &
       - task run:mcp
 
+  test:api:
+    desc: "Run tests for Twinpick API server"
+    cmds:
+      - ./{{.TESTSDIR}}/api_test.sh
+
   test:mcp:
     desc: "Run tests for Twinpick MCP server"
     cmds:
-      - cat testdata/request.json | ./bin/mcp | jq
+      - ./TESTSDIR/mcp_test.sh
 
   dev:
     desc: "Start Twinpick API server in development mode"
     cmds:
       - task: run:api
+
+  test:
+    desc: "Run all tests"
+    cmds:
+      - go test -v ./...
+
+  test:coverage:
+    desc: "Run tests with coverage report"
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -func=coverage.out
+      - rm coverage.out

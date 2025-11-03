@@ -6,24 +6,87 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/charmbracelet/log"
 	"github.com/gocolly/colly/v2"
 
 	"github.com/abroudoux/twinpick/internal/domain"
 )
 
-type LetterboxdScrapper struct{}
+type CollectorFactory func() *colly.Collector
+
+type LetterboxdScrapper struct {
+	NewCollector   CollectorFactory
+	GetTotalPages  func(url string) (int, error)
+	GetFilmsOnPage func(url string, page int) ([]domain.Film, error)
+}
 
 func NewLetterboxdScrapper() *LetterboxdScrapper {
-	return &LetterboxdScrapper{}
+	s := &LetterboxdScrapper{}
+	s.NewCollector = func() *colly.Collector { return colly.NewCollector() }
+
+	s.GetTotalPages = func(url string) (int, error) {
+		return s.getTotalPagesImpl(url)
+	}
+	s.GetFilmsOnPage = func(url string, page int) ([]domain.Film, error) {
+		return s.getFilmsOnPageImpl(url, page)
+	}
+	return s
 }
 
 func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperParams) (*domain.Watchlist, error) {
 	watchlist := domain.NewWatchlist(username)
-	var totalPages int
+	watchlistURL := buildWatchlistURL(username, params)
 
-	pageCollector := colly.NewCollector(colly.AllowedDomains("letterboxd.com"))
-	pageCollector.OnHTML("div.paginate-pages ul", func(e *colly.HTMLElement) {
+	totalPages, err := s.GetTotalPages(watchlistURL)
+	if err != nil {
+		return nil, err
+	}
+
+	const maxConcurrent = 20
+	pageCh := make(chan int, totalPages)
+	filmCh := make(chan []domain.Film, totalPages)
+	errCh := make(chan error, totalPages)
+
+	for i := 1; i <= totalPages; i++ {
+		pageCh <- i
+	}
+	close(pageCh)
+
+	var wg sync.WaitGroup
+
+	for range make([]struct{}, maxConcurrent) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for page := range pageCh {
+				films, err := s.GetFilmsOnPage(watchlistURL, page)
+				if err != nil {
+					errCh <- err
+					return
+				}
+				filmCh <- films
+			}
+		}()
+	}
+
+	wg.Wait()
+	close(filmCh)
+	close(errCh)
+
+	for fs := range filmCh {
+		watchlist.Films = append(watchlist.Films, fs...)
+	}
+
+	if len(errCh) > 0 {
+		return nil, <-errCh
+	}
+
+	return watchlist, nil
+}
+
+func (s *LetterboxdScrapper) getTotalPagesImpl(watchlistURL string) (int, error) {
+	totalPages := 1
+	collector := s.NewCollector()
+	collector.OnHTML("div.paginate-pages ul", func(e *colly.HTMLElement) {
 		e.ForEach("li.paginate-page a", func(_ int, el *colly.HTMLElement) {
 			if n, err := strconv.Atoi(el.Text); err == nil && n > totalPages {
 				totalPages = n
@@ -31,59 +94,38 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 		})
 	})
 
-	watchlistURL := buildWatchlistURL(username, params)
-	log.Infof("Visiting watchlist URL: %s", watchlistURL)
+	if err := collector.Visit(watchlistURL); err != nil {
+		return 0, err
+	}
+	collector.Wait()
+	return totalPages, nil
+}
 
-	_ = pageCollector.Visit(watchlistURL)
-	pageCollector.Wait()
+func (s *LetterboxdScrapper) getFilmsOnPageImpl(watchlistURL string, page int) ([]domain.Film, error) {
+	var films []domain.Film
+	collector := s.NewCollector()
+	collector.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
+		if title := e.ChildAttr("div.react-component", "data-item-full-display-name"); title != "" {
+			films = append(films, domain.Film{Title: title})
+		}
+	})
 
-	filmCh := make(chan []domain.Film)
-	var wg sync.WaitGroup
-
-	for i := 1; i <= totalPages; i++ {
-		wg.Add(1)
-		go func(page int) {
-			defer wg.Done()
-			c := colly.NewCollector(colly.AllowedDomains("letterboxd.com"))
-
-			var pageFilms []domain.Film
-			c.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
-				if title := e.ChildAttr("div.react-component", "data-item-full-display-name"); title != "" {
-					pageFilms = append(pageFilms, domain.Film{Title: title})
-				}
-			})
-			_ = c.Visit(fmt.Sprintf("%s/page/%d", strings.TrimRight(watchlistURL, "/"), page))
-			c.Wait()
-			filmCh <- pageFilms
-		}(i)
+	pageURL := fmt.Sprintf("%s/page/%d", strings.TrimRight(watchlistURL, "/"), page)
+	if err := collector.Visit(pageURL); err != nil {
+		return nil, err
 	}
 
-	go func() {
-		wg.Wait()
-		close(filmCh)
-	}()
-
-	watchlist.Username = username
-
-	for fs := range filmCh {
-		watchlist.Films = append(watchlist.Films, fs...)
-	}
-
-	return watchlist, nil
+	collector.Wait()
+	return films, nil
 }
 
 func buildWatchlistURL(username string, params *domain.ScrapperParams) string {
 	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist/", username)
-
 	if len(params.Genres) > 0 {
 		url += "genre/" + strings.Join(params.Genres, "+") + "/"
 	}
-
 	if params.Platform != "" {
 		url += fmt.Sprintf("on/%s/", params.Platform)
 	}
-
-	url = strings.TrimRight(url, "/")
-
-	return url
+	return strings.TrimRight(url, "/")
 }

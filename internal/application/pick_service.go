@@ -6,6 +6,10 @@ import (
 	"github.com/abroudoux/twinpick/internal/domain"
 )
 
+type PickServiceInterface interface {
+	Pick(pp *domain.PickParams) ([]domain.Film, error)
+}
+
 type PickService struct {
 	WatchlistProvider domain.WatchlistProvider
 }
@@ -14,7 +18,25 @@ func NewPickService(wp domain.WatchlistProvider) *PickService {
 	return &PickService{WatchlistProvider: wp}
 }
 
-func (s *PickService) Pick(pp *domain.ProgramParams) ([]domain.Film, error) {
+func (s *PickService) Pick(pp *domain.PickParams) ([]domain.Film, error) {
+	watchlists, err := s.collectWatchlists(pp.Usernames, pp.ScrapperParams)
+	if err != nil {
+		return nil, err
+	}
+
+	films, err := domain.CompareWatchlists(watchlists)
+	if err != nil {
+		return nil, err
+	}
+
+	if pp.Limit > 0 && len(films) > pp.Limit {
+		films = films[:pp.Limit]
+	}
+
+	return films, nil
+}
+
+func (s *PickService) collectWatchlists(usernames []string, params *domain.ScrapperParams) (map[string]*domain.Watchlist, error) {
 	var (
 		mu         sync.Mutex
 		wg         sync.WaitGroup
@@ -22,41 +44,21 @@ func (s *PickService) Pick(pp *domain.ProgramParams) ([]domain.Film, error) {
 		firstError error
 	)
 
-	for _, user := range pp.Usernames {
+	for _, user := range usernames {
 		wg.Add(1)
 		go func(username string) {
 			defer wg.Done()
-
-			wl, err := s.WatchlistProvider.GetWatchlist(username, pp.ScrapperParams)
-			if err != nil {
-				mu.Lock()
-				if firstError == nil {
-					firstError = err
-				}
-				mu.Unlock()
+			wl, err := s.WatchlistProvider.GetWatchlist(username, params)
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil && firstError == nil {
+				firstError = err
 				return
 			}
-
-			mu.Lock()
 			watchlists[username] = wl
-			mu.Unlock()
 		}(user)
 	}
-
 	wg.Wait()
 
-	if firstError != nil {
-		return nil, firstError
-	}
-
-	commonFilms, err := domain.CompareWatchlists(watchlists)
-	if err != nil {
-		return nil, err
-	}
-
-	if pp.Limit > 0 && len(commonFilms) > pp.Limit {
-		commonFilms = commonFilms[:pp.Limit]
-	}
-
-	return commonFilms, nil
+	return watchlists, firstError
 }

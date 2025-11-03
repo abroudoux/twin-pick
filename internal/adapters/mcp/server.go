@@ -69,9 +69,9 @@ func (s *Server) Run() {
 			return
 		}
 
-		programParams := domain.NewProgramParams(args.Usernames, domain.NewScrapperParams(args.Genres, args.Platform), args.Limit)
+		pickParams := domain.NewPickParams(args.Usernames, domain.NewScrapperParams(args.Genres, args.Platform), args.Limit)
 
-		films, err := s.PickService.Pick(programParams)
+		films, err := s.PickService.Pick(pickParams)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Pick error: %v\n", err)
 			return

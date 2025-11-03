@@ -13,17 +13,19 @@ import (
 )
 
 type Server struct {
-	PickService *application.PickService
+	Router      *gin.Engine
+	PickService application.PickServiceInterface
 }
 
-func NewServer(ps *application.PickService) *Server {
-	return &Server{PickService: ps}
+func NewServer(ps application.PickServiceInterface) *Server {
+	s := &Server{PickService: ps}
+	s.Router = gin.Default()
+	s.registerRoutes(s.Router)
+	return s
 }
 
 func (s *Server) Run() {
-	r := gin.Default()
-	s.registerRoutes(r)
-	r.Run(":8080")
+	s.Router.Run(":8080")
 }
 
 func (s *Server) registerRoutes(r *gin.Engine) {
@@ -34,26 +36,27 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 }
 
 func (s *Server) handlePick(c *gin.Context) {
-	params, err := returnProgramParams(c)
+	params, err := returnPickParams(c)
 	if err != nil {
 		return
 	}
 
 	films, err := s.PickService.Pick(params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"films": films})
 }
 
-func returnProgramParams(c *gin.Context) (*domain.ProgramParams, error) {
-	usernames := strings.Split(c.Query("usernames"), ",")
-	if len(usernames) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "--usernames is required"})
+func returnPickParams(c *gin.Context) (*domain.PickParams, error) {
+	rawUsernames := c.Query("usernames")
+	if strings.TrimSpace(rawUsernames) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "param usernames is required"})
 		return nil, fmt.Errorf("usernames is required")
 	}
+	usernames := strings.Split(rawUsernames, ",")
 
 	rawGenres := strings.Split(c.Query("genres"), ",")
 	var genres []string
@@ -73,5 +76,10 @@ func returnProgramParams(c *gin.Context) (*domain.ProgramParams, error) {
 	}
 
 	scrapperParams := domain.NewScrapperParams(genres, platform)
-	return domain.NewProgramParams(usernames, scrapperParams, limit), nil
+	return domain.NewPickParams(usernames, scrapperParams, limit), nil
+}
+
+func respondError(c *gin.Context, code int, msg string) {
+	c.JSON(code, gin.H{"error": msg})
+	c.Abort()
 }
