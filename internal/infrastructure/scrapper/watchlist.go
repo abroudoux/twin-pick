@@ -1,4 +1,4 @@
-package infrastructure
+package scrapper
 
 import (
 	"fmt"
@@ -6,31 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gocolly/colly/v2"
-
 	"github.com/abroudoux/twinpick/internal/domain"
+	"github.com/gocolly/colly/v2"
 )
-
-type CollectorFactory func() *colly.Collector
-
-type LetterboxdScrapper struct {
-	NewCollector   CollectorFactory
-	GetTotalPages  func(url string) (int, error)
-	GetFilmsOnPage func(url string, page int) ([]domain.Film, error)
-}
-
-func NewLetterboxdScrapper() *LetterboxdScrapper {
-	s := &LetterboxdScrapper{}
-	s.NewCollector = func() *colly.Collector { return colly.NewCollector() }
-
-	s.GetTotalPages = func(url string) (int, error) {
-		return s.getTotalPagesImpl(url)
-	}
-	s.GetFilmsOnPage = func(url string, page int) ([]domain.Film, error) {
-		return s.getFilmsOnPageImpl(url, page)
-	}
-	return s
-}
 
 func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperParams) (*domain.Watchlist, error) {
 	watchlist := domain.NewWatchlist(username)
@@ -103,6 +81,7 @@ func (s *LetterboxdScrapper) getTotalPagesImpl(watchlistURL string) (int, error)
 
 func (s *LetterboxdScrapper) getFilmsOnPageImpl(watchlistURL string, page int) ([]domain.Film, error) {
 	var films []domain.Film
+
 	collector := s.NewCollector()
 	collector.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
 		if title := e.ChildAttr("div.react-component", "data-item-full-display-name"); title != "" {
@@ -120,12 +99,13 @@ func (s *LetterboxdScrapper) getFilmsOnPageImpl(watchlistURL string, page int) (
 }
 
 func buildWatchlistURL(username string, params *domain.ScrapperParams) string {
-	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist/", username)
+	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist", username)
+
 	if len(params.Genres) > 0 {
-		url += "genre/" + strings.Join(params.Genres, "+") + "/"
+		url += "/genre/" + strings.Join(params.Genres, "+")
 	}
 	if params.Platform != "" {
-		url += fmt.Sprintf("on/%s/", params.Platform)
+		url += fmt.Sprintf("/on/%s", params.Platform)
 	}
-	return strings.TrimRight(url, "/")
+	return url
 }

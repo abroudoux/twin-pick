@@ -19,3 +19,8 @@ type PickParams struct {
 	ScrapperParams *ScrapperParams
 	Limit          int
 }
+
+type SpotParams struct {
+	ScrapperParams *ScrapperParams
+	Limit          int
+}

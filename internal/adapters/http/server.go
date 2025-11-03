@@ -15,10 +15,11 @@ import (
 type Server struct {
 	Router      *gin.Engine
 	PickService application.PickServiceInterface
+	SpotService application.SpotServiceInterface
 }
 
-func NewServer(ps application.PickServiceInterface) *Server {
-	s := &Server{PickService: ps}
+func NewServer(ps application.PickServiceInterface, ss application.SpotServiceInterface) *Server {
+	s := &Server{PickService: ps, SpotService: ss}
 	s.Router = gin.Default()
 	s.registerRoutes(s.Router)
 	return s
@@ -33,32 +34,48 @@ func (s *Server) registerRoutes(r *gin.Engine) {
 	v1 := api.Group("/v1")
 
 	v1.GET("/pick", s.handlePick)
+	v1.GET("/spot", s.handleSpot)
 }
 
-func (s *Server) handlePick(c *gin.Context) {
-	params, err := returnPickParams(c)
+func (s *Server) handlePick(ctx *gin.Context) {
+	params, err := returnPickParams(ctx)
 	if err != nil {
 		return
 	}
 
 	films, err := s.PickService.Pick(params)
 	if err != nil {
-		respondError(c, http.StatusBadRequest, err.Error())
+		respondError(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"films": films})
+	ctx.JSON(http.StatusOK, gin.H{"films": films})
 }
 
-func returnPickParams(c *gin.Context) (*domain.PickParams, error) {
-	rawUsernames := c.Query("usernames")
+func (s *Server) handleSpot(ctx *gin.Context) {
+	params, err := returnSpotParams(ctx)
+	if err != nil {
+		return
+	}
+
+	films, err := s.SpotService.Spot(params)
+	if err != nil {
+		respondError(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"films": films})
+}
+
+func returnPickParams(ctx *gin.Context) (*domain.PickParams, error) {
+	rawUsernames := ctx.Query("usernames")
 	if strings.TrimSpace(rawUsernames) == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "param usernames is required"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "param usernames is required"})
 		return nil, fmt.Errorf("usernames is required")
 	}
 	usernames := strings.Split(rawUsernames, ",")
 
-	rawGenres := strings.Split(c.Query("genres"), ",")
+	rawGenres := strings.Split(ctx.Query("genres"), ",")
 	var genres []string
 	for _, g := range rawGenres {
 		if trimmed := strings.TrimSpace(g); trimmed != "" {
@@ -66,20 +83,40 @@ func returnPickParams(c *gin.Context) (*domain.PickParams, error) {
 		}
 	}
 
-	platform := c.Query("platform")
+	platform := ctx.Query("platform")
 
 	limit := 0
-	if l := c.Query("limit"); l != "" {
+	if l := ctx.Query("limit"); l != "" {
 		if v, err := strconv.Atoi(l); err == nil && v > 0 {
 			limit = v
 		}
 	}
 
-	scrapperParams := domain.NewScrapperParams(genres, platform)
-	return domain.NewPickParams(usernames, scrapperParams, limit), nil
+	return domain.NewPickParams(usernames, domain.NewScrapperParams(genres, platform), limit), nil
 }
 
-func respondError(c *gin.Context, code int, msg string) {
-	c.JSON(code, gin.H{"error": msg})
-	c.Abort()
+func returnSpotParams(ctx *gin.Context) (*domain.SpotParams, error) {
+	rawGenres := strings.Split(ctx.Query("genres"), ",")
+	var genres []string
+	for _, g := range rawGenres {
+		if trimmed := strings.TrimSpace(g); trimmed != "" {
+			genres = append(genres, trimmed)
+		}
+	}
+
+	platform := ctx.Query("platform")
+
+	limit := 0
+	if l := ctx.Query("limit"); l != "" {
+		if v, err := strconv.Atoi(l); err == nil && v > 0 {
+			limit = v
+		}
+	}
+
+	return domain.NewSpotParams(domain.NewScrapperParams(genres, platform), limit), nil
+}
+
+func respondError(ctx *gin.Context, code int, msg string) {
+	ctx.JSON(code, gin.H{"error": msg})
+	ctx.Abort()
 }

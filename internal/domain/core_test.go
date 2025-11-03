@@ -53,6 +53,18 @@ func TestNewPickParams(t *testing.T) {
 	}
 }
 
+func TestNewSpotParams(t *testing.T) {
+	s := NewScrapperParams([]string{"horror"}, "hulu")
+	p := NewSpotParams(s, 5)
+
+	if p.ScrapperParams.Platform != "netflix-fr" {
+		t.Errorf("expected platform 'netflix-fr', got '%s'", p.ScrapperParams.Platform)
+	}
+	if p.Limit != 5 {
+		t.Errorf("expected limit 5, got %d", p.Limit)
+	}
+}
+
 func TestCompareWatchlists_CommonFilms(t *testing.T) {
 	w1 := NewWatchlist("alice")
 	w1.Films = []Film{{Title: "Inception"}, {Title: "Tenet"}}

@@ -3,11 +3,11 @@ package main
 import (
 	"github.com/abroudoux/twinpick/internal/adapters/cli"
 	"github.com/abroudoux/twinpick/internal/application"
-	"github.com/abroudoux/twinpick/internal/infrastructure"
+	"github.com/abroudoux/twinpick/internal/infrastructure/scrapper"
 )
 
 func main() {
-	provider := infrastructure.NewLetterboxdScrapper()
+	provider := scrapper.NewLetterboxdScrapper()
 	pickService := application.NewPickService(provider)
 
 	cli.Execute(pickService)

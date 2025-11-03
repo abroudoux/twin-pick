@@ -34,7 +34,7 @@ func TestHandlePick_Success(t *testing.T) {
 		},
 	}
 
-	server := NewServer(fakeService)
+	server := NewServer(fakeService, nil)
 	router := server.Router
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/pick?usernames=alice,bob&genres=action,drama&platform=netflix&limit=2", nil)

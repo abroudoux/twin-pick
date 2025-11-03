@@ -1,4 +1,4 @@
-package infrastructure
+package scrapper
 
 import (
 	"net/http"
