@@ -64,3 +64,15 @@ tasks:
     desc: "Start Twinpick API server in development mode"
     cmds:
       - task: run:api
+
+  test:
+    desc: "Run all tests"
+    cmds:
+      - go test -v ./...
+
+  test:coverage:
+    desc: "Run tests with coverage report"
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -func=coverage.out
+      - rm coverage.out
