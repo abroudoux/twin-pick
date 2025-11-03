@@ -41,21 +41,31 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 		return nil, err
 	}
 
-	var wg sync.WaitGroup
+	const maxConcurrent = 20
+	pageCh := make(chan int, totalPages)
 	filmCh := make(chan []domain.Film, totalPages)
 	errCh := make(chan error, totalPages)
 
 	for i := 1; i <= totalPages; i++ {
+		pageCh <- i
+	}
+	close(pageCh)
+
+	var wg sync.WaitGroup
+
+	for range make([]struct{}, maxConcurrent) {
 		wg.Add(1)
-		go func(page int) {
+		go func() {
 			defer wg.Done()
-			films, err := s.GetFilmsOnPage(watchlistURL, page)
-			if err != nil {
-				errCh <- err
-				return
+			for page := range pageCh {
+				films, err := s.GetFilmsOnPage(watchlistURL, page)
+				if err != nil {
+					errCh <- err
+					return
+				}
+				filmCh <- films
 			}
-			filmCh <- films
-		}(i)
+		}()
 	}
 
 	wg.Wait()
