@@ -1,4 +1,4 @@
-package infrastructure
+package scrapper
 
 import (
 	"fmt"
@@ -11,32 +11,11 @@ import (
 	"github.com/abroudoux/twinpick/internal/domain"
 )
 
-type CollectorFactory func() *colly.Collector
-
-type LetterboxdScrapper struct {
-	NewCollector   CollectorFactory
-	GetTotalPages  func(url string) (int, error)
-	GetFilmsOnPage func(url string, page int) ([]domain.Film, error)
-}
-
-func NewLetterboxdScrapper() *LetterboxdScrapper {
-	s := &LetterboxdScrapper{}
-	s.NewCollector = func() *colly.Collector { return colly.NewCollector() }
-
-	s.GetTotalPages = func(url string) (int, error) {
-		return s.getTotalPagesImpl(url)
-	}
-	s.GetFilmsOnPage = func(url string, page int) ([]domain.Film, error) {
-		return s.getFilmsOnPageImpl(url, page)
-	}
-	return s
-}
-
 func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperParams) (*domain.Watchlist, error) {
 	watchlist := domain.NewWatchlist(username)
 	watchlistURL := buildWatchlistURL(username, params)
 
-	totalPages, err := s.GetTotalPages(watchlistURL)
+	totalPages, err := s.GetTotalWatchlistPages(watchlistURL)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +37,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 		go func() {
 			defer wg.Done()
 			for page := range pageCh {
-				films, err := s.GetFilmsOnPage(watchlistURL, page)
+				films, err := s.GetFilmsOnWatchlistPage(watchlistURL, page)
 				if err != nil {
 					errCh <- err
 					return
@@ -83,7 +62,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 	return watchlist, nil
 }
 
-func (s *LetterboxdScrapper) getTotalPagesImpl(watchlistURL string) (int, error) {
+func (s *LetterboxdScrapper) getTotalWatchlistPagesImpl(watchlistURL string) (int, error) {
 	totalPages := 1
 	collector := s.NewCollector()
 	collector.OnHTML("div.paginate-pages ul", func(e *colly.HTMLElement) {
@@ -101,8 +80,9 @@ func (s *LetterboxdScrapper) getTotalPagesImpl(watchlistURL string) (int, error)
 	return totalPages, nil
 }
 
-func (s *LetterboxdScrapper) getFilmsOnPageImpl(watchlistURL string, page int) ([]domain.Film, error) {
+func (s *LetterboxdScrapper) getFilmsOnWatchlistPageImpl(watchlistURL string, page int) ([]domain.Film, error) {
 	var films []domain.Film
+
 	collector := s.NewCollector()
 	collector.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
 		if title := e.ChildAttr("div.react-component", "data-item-full-display-name"); title != "" {
@@ -120,12 +100,13 @@ func (s *LetterboxdScrapper) getFilmsOnPageImpl(watchlistURL string, page int) (
 }
 
 func buildWatchlistURL(username string, params *domain.ScrapperParams) string {
-	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist/", username)
+	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist", username)
+
 	if len(params.Genres) > 0 {
-		url += "genre/" + strings.Join(params.Genres, "+") + "/"
+		url += "/genre/" + strings.Join(params.Genres, "+")
 	}
 	if params.Platform != "" {
-		url += fmt.Sprintf("on/%s/", params.Platform)
+		url += fmt.Sprintf("/on/%s", params.Platform)
 	}
-	return strings.TrimRight(url, "/")
+	return url
 }

@@ -33,6 +33,13 @@ func NewPickParams(usernames []string, scrapperParams *ScrapperParams, limit int
 	}
 }
 
+func NewSpotParams(scrapperParams *ScrapperParams, limit int) *SpotParams {
+	return &SpotParams{
+		ScrapperParams: scrapperParams,
+		Limit:          limit,
+	}
+}
+
 func CompareWatchlists(watchlists map[string]*Watchlist) ([]Film, error) {
 	if len(watchlists) == 0 {
 		return nil, errors.New("no watchlists provided")

@@ -1,4 +1,4 @@
-package infrastructure
+package scrapper
 
 import (
 	"net/http"
@@ -24,7 +24,7 @@ func TestGetTotalPages(t *testing.T) {
 
 	s := NewLetterboxdScrapper()
 
-	pages, err := s.GetTotalPages(ts.URL)
+	pages, err := s.GetTotalWatchlistPages(ts.URL)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestGetFilmsOnPage(t *testing.T) {
 
 	s := NewLetterboxdScrapper()
 
-	films, err := s.GetFilmsOnPage(ts.URL, 1)
+	films, err := s.GetFilmsOnWatchlistPage(ts.URL, 1)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -61,11 +61,11 @@ func TestGetFilmsOnPage(t *testing.T) {
 func TestGetWatchlist_Fake(t *testing.T) {
 	s := NewLetterboxdScrapper()
 
-	s.GetTotalPages = func(_ string) (int, error) {
+	s.GetTotalWatchlistPages = func(_ string) (int, error) {
 		return 2, nil
 	}
 
-	s.GetFilmsOnPage = func(_ string, page int) ([]domain.Film, error) {
+	s.GetFilmsOnWatchlistPage = func(_ string, page int) ([]domain.Film, error) {
 		switch page {
 		case 1:
 			return []domain.Film{
