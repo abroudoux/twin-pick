@@ -9,21 +9,21 @@ import (
 type CollectorFactory func() *colly.Collector
 
 type LetterboxdScrapper struct {
-	NewCollector    CollectorFactory
-	GetTotalPages   func(url string) (int, error)
-	GetFilmsOnPage  func(url string, page int) ([]domain.Film, error)
-	GetPopularFilms func(url string) ([]domain.Film, error)
+	NewCollector            CollectorFactory
+	GetTotalWatchlistPages  func(url string) (int, error)
+	GetFilmsOnWatchlistPage func(url string, page int) ([]domain.Film, error)
+	GetPopularFilms         func(url string) ([]domain.Film, error)
 }
 
 func NewLetterboxdScrapper() *LetterboxdScrapper {
 	scrapper := &LetterboxdScrapper{}
 	scrapper.NewCollector = func() *colly.Collector { return colly.NewCollector() }
 
-	scrapper.GetTotalPages = func(url string) (int, error) {
-		return scrapper.getTotalPagesImpl(url)
+	scrapper.GetTotalWatchlistPages = func(url string) (int, error) {
+		return scrapper.getTotalWatchlistPagesImpl(url)
 	}
-	scrapper.GetFilmsOnPage = func(url string, page int) ([]domain.Film, error) {
-		return scrapper.getFilmsOnPageImpl(url, page)
+	scrapper.GetFilmsOnWatchlistPage = func(url string, page int) ([]domain.Film, error) {
+		return scrapper.getFilmsOnWatchlistPageImpl(url, page)
 	}
 	scrapper.GetPopularFilms = func(url string) ([]domain.Film, error) {
 		return scrapper.getPopularFilmsImpl(url)

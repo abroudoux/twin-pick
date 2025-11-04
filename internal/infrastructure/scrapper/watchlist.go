@@ -14,7 +14,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 	watchlist := domain.NewWatchlist(username)
 	watchlistURL := buildWatchlistURL(username, params)
 
-	totalPages, err := s.GetTotalPages(watchlistURL)
+	totalPages, err := s.GetTotalWatchlistPages(watchlistURL)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 		go func() {
 			defer wg.Done()
 			for page := range pageCh {
-				films, err := s.GetFilmsOnPage(watchlistURL, page)
+				films, err := s.GetFilmsOnWatchlistPage(watchlistURL, page)
 				if err != nil {
 					errCh <- err
 					return
@@ -61,7 +61,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 	return watchlist, nil
 }
 
-func (s *LetterboxdScrapper) getTotalPagesImpl(watchlistURL string) (int, error) {
+func (s *LetterboxdScrapper) getTotalWatchlistPagesImpl(watchlistURL string) (int, error) {
 	totalPages := 1
 	collector := s.NewCollector()
 	collector.OnHTML("div.paginate-pages ul", func(e *colly.HTMLElement) {
@@ -79,7 +79,7 @@ func (s *LetterboxdScrapper) getTotalPagesImpl(watchlistURL string) (int, error)
 	return totalPages, nil
 }
 
-func (s *LetterboxdScrapper) getFilmsOnPageImpl(watchlistURL string, page int) ([]domain.Film, error) {
+func (s *LetterboxdScrapper) getFilmsOnWatchlistPageImpl(watchlistURL string, page int) ([]domain.Film, error) {
 	var films []domain.Film
 
 	collector := s.NewCollector()
