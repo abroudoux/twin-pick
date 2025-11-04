@@ -6,8 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/abroudoux/twinpick/internal/domain"
 	"github.com/gocolly/colly/v2"
+
+	"github.com/abroudoux/twinpick/internal/domain"
 )
 
 func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperParams) (*domain.Watchlist, error) {
