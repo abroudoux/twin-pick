@@ -1,24 +1,27 @@
 version: "3"
 
 vars:
-  BINDIR: bin
-  TESTSDIR: tests
+  BIN_DIR: bin
+  TESTS_DIR: tests
+  CLI_DIR: cmd/twinpick-cli
+  API_DIR: cmd/twinpick-api
+  MCP_DIR: cmd/twinpick-mcp
 
 tasks:
   build:api:
     desc: "Build Twinpick API server"
     cmds:
-      - go build -o {{.BINDIR}}/api cmd/api/main.go
+      - go build -o {{.BIN_DIR}}/twinpick-api {{.API_DIR}}/main.go
 
   build:mcp:
     desc: "Build Twinpick MCP server"
     cmds:
-      - go build -o {{.BINDIR}}/mcp cmd/mcp/main.go
+      - go build -o {{.BIN_DIR}}/twinpick-mcp {{.MCP_DIR}}/main.go
 
   build:cli:
     desc: "Build Twinpick CLI"
     cmds:
-      - go build -o {{.BINDIR}}/cli cmd/cli/main.go
+      - go build -o {{.BIN_DIR}}/twinpick-cli {{.CLI_DIR}}/main.go
 
   build:all:
     desc: "Build all Twinpick components"
@@ -32,21 +35,21 @@ tasks:
     deps:
       - build:api
     cmds:
-      - ./{{.BINDIR}}/api
+      - ./{{.BIN_DIR}}/twinpick-api
 
   run:mcp:
     desc: "Start Twinpick MCP server"
     deps:
       - build:mcp
     cmds:
-      - ./{{.BINDIR}}/mcp
+      - ./{{.BIN_DIR}}/twinpick-mcp
 
   run:cli:
     desc: "Run Twinpick CLI"
     deps:
       - build:cli
     cmds:
-      - ./{{.BINDIR}}/cli {{.CLI_ARGS}}
+      - ./{{.BIN_DIR}}/twinpick-cli {{.CLI_ARGS}}
 
   run:all:
     desc: "Start all Twinpick components"
@@ -59,12 +62,12 @@ tasks:
   test:api:
     desc: "Run tests for Twinpick API server"
     cmds:
-      - ./{{.TESTSDIR}}/api_test.sh
+      - ./{{.TESTS_DIR}}/api_test.sh
 
   test:mcp:
     desc: "Run tests for Twinpick MCP server"
     cmds:
-      - ./TESTSDIR/mcp_test.sh
+      - ./TESTS_DIR/mcp_test.sh
 
   default:
     desc: "Start Twinpick API server in development mode"
