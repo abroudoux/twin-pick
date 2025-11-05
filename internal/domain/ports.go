@@ -5,5 +5,5 @@ type WatchlistProvider interface {
 }
 
 type SuggestionsProvider interface {
-	GetSuggestions(scrapperParams *ScrapperParams) ([]Film, error)
+	GetSuggestions(scrapperParams *ScrapperParams) ([]*Film, error)
 }

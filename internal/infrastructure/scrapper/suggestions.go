@@ -8,18 +8,18 @@ import (
 	"github.com/abroudoux/twinpick/internal/domain"
 )
 
-func (s *LetterboxdScrapper) GetSuggestions(params *domain.ScrapperParams) ([]domain.Film, error) {
+func (s *LetterboxdScrapper) GetSuggestions(params *domain.ScrapperParams) ([]*domain.Film, error) {
 	popularFilmsURL := buildPopularFilmsURL(params)
 	return s.getPopularFilmsImpl(popularFilmsURL)
 }
 
-func (s *LetterboxdScrapper) getPopularFilmsImpl(popularFilmsURL string) ([]domain.Film, error) {
-	var films []domain.Film
+func (s *LetterboxdScrapper) getPopularFilmsImpl(popularFilmsURL string) ([]*domain.Film, error) {
+	var films []*domain.Film
 
 	collector := colly.NewCollector(colly.AllowedDomains("letterboxd.com"))
 	collector.OnHTML("ul.poster-list li", func(e *colly.HTMLElement) {
 		if title := e.ChildAttr("div.react-component", "data-item-full-display-name"); title != "" {
-			films = append(films, domain.Film{Title: title})
+			films = append(films, domain.NewFilm(title, ""))
 		}
 	})
 

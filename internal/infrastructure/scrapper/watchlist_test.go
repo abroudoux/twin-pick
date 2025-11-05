@@ -65,15 +65,15 @@ func TestGetWatchlist_Fake(t *testing.T) {
 		return 2, nil
 	}
 
-	s.GetFilmsOnWatchlistPage = func(_ string, page int) ([]domain.Film, error) {
+	s.GetFilmsOnWatchlistPage = func(_ string, page int) ([]*domain.Film, error) {
 		switch page {
 		case 1:
-			return []domain.Film{
+			return []*domain.Film{
 				{Title: "Film1A"},
 				{Title: "Film1B"},
 			}, nil
 		case 2:
-			return []domain.Film{
+			return []*domain.Film{
 				{Title: "Film2A"},
 				{Title: "Film2B"},
 			}, nil

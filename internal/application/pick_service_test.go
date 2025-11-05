@@ -26,7 +26,7 @@ func (f *fakeWatchlistProvider) GetWatchlist(username string, _ *domain.Scrapper
 func makeWatchlist(username string, films ...string) *domain.Watchlist {
 	wl := &domain.Watchlist{Username: username}
 	for _, f := range films {
-		wl.Films = append(wl.Films, domain.Film{Title: f})
+		wl.Films = append(wl.Films, domain.NewFilm(f, ""))
 	}
 	return wl
 }

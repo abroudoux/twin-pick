@@ -4,10 +4,11 @@ import (
 	"sync"
 
 	"github.com/abroudoux/twinpick/internal/domain"
+	"github.com/abroudoux/twinpick/internal/infrastructure/client"
 )
 
 type PickServiceInterface interface {
-	Pick(pp *domain.PickParams) ([]domain.Film, error)
+	Pick(pp *domain.PickParams) ([]*domain.Film, error)
 }
 
 type PickService struct {
@@ -18,7 +19,7 @@ func NewPickService(wp domain.WatchlistProvider) *PickService {
 	return &PickService{WatchlistProvider: wp}
 }
 
-func (s *PickService) Pick(pp *domain.PickParams) ([]domain.Film, error) {
+func (s *PickService) Pick(pp *domain.PickParams) ([]*domain.Film, error) {
 	watchlists, err := s.collectWatchlists(pp.Usernames, pp.ScrapperParams)
 	if err != nil {
 		return nil, err
@@ -33,7 +34,12 @@ func (s *PickService) Pick(pp *domain.PickParams) ([]domain.Film, error) {
 		films = films[:pp.Limit]
 	}
 
-	return films, nil
+	filmsWithDetails, err := client.FetchFilmsDetails(films)
+	if err != nil {
+		return nil, err
+	}
+
+	return filmsWithDetails, nil
 }
 
 func (s *PickService) collectWatchlists(usernames []string, params *domain.ScrapperParams) (map[string]*domain.Watchlist, error) {

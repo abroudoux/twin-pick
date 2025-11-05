@@ -7,7 +7,7 @@ import (
 )
 
 type SpotServiceInterface interface {
-	Spot(sp *domain.SpotParams) ([]domain.Film, error)
+	Spot(sp *domain.SpotParams) ([]*domain.Film, error)
 }
 
 type SpotService struct {
@@ -18,7 +18,7 @@ func NewSpotService(sp domain.SuggestionsProvider) *SpotService {
 	return &SpotService{SuggestionsProvider: sp}
 }
 
-func (s *SpotService) Spot(sp *domain.SpotParams) ([]domain.Film, error) {
+func (s *SpotService) Spot(sp *domain.SpotParams) ([]*domain.Film, error) {
 	films, err := s.SuggestionsProvider.GetSuggestions(sp.ScrapperParams)
 	if err != nil {
 		return nil, err

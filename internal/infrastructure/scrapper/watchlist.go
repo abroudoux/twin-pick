@@ -20,9 +20,9 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 		return nil, err
 	}
 
-	const maxConcurrent = 20
+	const maxConcurrent = 10
 	pageCh := make(chan int, totalPages)
-	filmCh := make(chan []domain.Film, totalPages)
+	filmCh := make(chan []*domain.Film, totalPages)
 	errCh := make(chan error, totalPages)
 
 	for i := 1; i <= totalPages; i++ {
@@ -64,6 +64,7 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 
 func (s *LetterboxdScrapper) getTotalWatchlistPagesImpl(watchlistURL string) (int, error) {
 	totalPages := 1
+
 	collector := s.NewCollector()
 	collector.OnHTML("div.paginate-pages ul", func(e *colly.HTMLElement) {
 		e.ForEach("li.paginate-page a", func(_ int, el *colly.HTMLElement) {
@@ -80,14 +81,19 @@ func (s *LetterboxdScrapper) getTotalWatchlistPagesImpl(watchlistURL string) (in
 	return totalPages, nil
 }
 
-func (s *LetterboxdScrapper) getFilmsOnWatchlistPageImpl(watchlistURL string, page int) ([]domain.Film, error) {
-	var films []domain.Film
+func (s *LetterboxdScrapper) getFilmsOnWatchlistPageImpl(watchlistURL string, page int) ([]*domain.Film, error) {
+	var films []*domain.Film
 
 	collector := s.NewCollector()
 	collector.OnHTML("div.poster-grid li", func(e *colly.HTMLElement) {
-		if title := e.ChildAttr("div.react-component", "data-item-full-display-name"); title != "" {
-			films = append(films, domain.Film{Title: title})
+		title := e.ChildAttr("div.react-component", "data-item-full-display-name")
+		detailsEndpoint := e.ChildAttr("div.react-component", "data-details-endpoint")
+
+		if title == "" || detailsEndpoint == "" {
+			return
 		}
+
+		films = append(films, domain.NewFilm(title, detailsEndpoint))
 	})
 
 	pageURL := fmt.Sprintf("%s/page/%d", strings.TrimRight(watchlistURL, "/"), page)

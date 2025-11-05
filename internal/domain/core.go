@@ -8,13 +8,14 @@ import (
 func NewWatchlist(username string) *Watchlist {
 	return &Watchlist{
 		Username: username,
-		Films:    []Film{},
+		Films:    []*Film{},
 	}
 }
 
-func NewFilm(name string) Film {
-	return Film{
-		Title: name,
+func NewFilm(name, detailsEndpoint string) *Film {
+	return &Film{
+		Title:           name,
+		DetailsEndpoint: detailsEndpoint,
 	}
 }
 
@@ -40,44 +41,44 @@ func NewSpotParams(scrapperParams *ScrapperParams, limit int) *SpotParams {
 	}
 }
 
-func CompareWatchlists(watchlists map[string]*Watchlist) ([]Film, error) {
+func CompareWatchlists(watchlists map[string]*Watchlist) ([]*Film, error) {
 	if len(watchlists) == 0 {
 		return nil, errors.New("no watchlists provided")
 	}
 
-	filmCount := countFilmsAcrossWatchlists(watchlists)
-	var common []Film
-	for title, count := range filmCount {
+	type filmKey struct{ Endpoint string }
+	filmMap := make(map[filmKey]*Film)
+	filmCount := make(map[filmKey]int)
+
+	for _, wl := range watchlists {
+		seen := make(map[filmKey]bool)
+		for _, f := range wl.Films {
+			key := filmKey{Endpoint: f.DetailsEndpoint}
+			filmMap[key] = f
+			if !seen[key] {
+				filmCount[key]++
+				seen[key] = true
+			}
+		}
+	}
+
+	var common []*Film
+	for key, count := range filmCount {
 		if count == len(watchlists) {
-			common = append(common, NewFilm(title))
+			common = append(common, filmMap[key])
 		}
 	}
 
 	return common, nil
 }
 
-func countFilmsAcrossWatchlists(watchlists map[string]*Watchlist) map[string]int {
-	filmCount := make(map[string]int)
-	for _, wl := range watchlists {
-		seen := make(map[string]bool)
-		for _, f := range wl.Films {
-			if !seen[f.Title] {
-				filmCount[f.Title]++
-				seen[f.Title] = true
-			}
-		}
-	}
-
-	return filmCount
-}
-
-func SelectRandomFilm(films []Film) (Film, error) {
+func SelectRandomFilm(films []*Film) (*Film, error) {
 	return selectRandomFilmWithRand(films, rand.Intn)
 }
 
-func selectRandomFilmWithRand(films []Film, randFn func(int) int) (Film, error) {
+func selectRandomFilmWithRand(films []*Film, randFn func(int) int) (*Film, error) {
 	if len(films) == 0 {
-		return Film{}, errors.New("no films to select from")
+		return nil, errors.New("no films to select from")
 	}
 	return films[randFn(len(films))], nil
 }

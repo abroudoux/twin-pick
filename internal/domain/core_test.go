@@ -20,7 +20,7 @@ func TestNewWatchlist(t *testing.T) {
 }
 
 func TestNewFilm(t *testing.T) {
-	f := NewFilm("Inception")
+	f := NewFilm("Inception", "")
 
 	if f.Title != "Inception" {
 		t.Errorf("expected title 'Inception', got '%s'", f.Title)
@@ -67,10 +67,10 @@ func TestNewSpotParams(t *testing.T) {
 
 func TestCompareWatchlists_CommonFilms(t *testing.T) {
 	w1 := NewWatchlist("alice")
-	w1.Films = []Film{{Title: "Inception"}, {Title: "Tenet"}}
+	w1.Films = []*Film{{Title: "Inception"}, {Title: "Tenet"}}
 
 	w2 := NewWatchlist("bob")
-	w2.Films = []Film{{Title: "Tenet"}, {Title: "Interstellar"}}
+	w2.Films = []*Film{{Title: "Tenet"}, {Title: "Interstellar"}}
 
 	watchlists := map[string]*Watchlist{
 		"alice": w1,
@@ -92,10 +92,10 @@ func TestCompareWatchlists_CommonFilms(t *testing.T) {
 
 func TestCompareWatchlists_NoCommonFilms(t *testing.T) {
 	w1 := NewWatchlist("alice")
-	w1.Films = []Film{{Title: "Inception"}}
+	w1.Films = []*Film{{Title: "Inception"}}
 
 	w2 := NewWatchlist("bob")
-	w2.Films = []Film{{Title: "Matrix"}}
+	w2.Films = []*Film{{Title: "Matrix"}}
 
 	common, err := CompareWatchlists(map[string]*Watchlist{"a": w1, "b": w2})
 	if err != nil {
@@ -114,8 +114,8 @@ func TestCompareWatchlists_NoWatchlists(t *testing.T) {
 }
 
 func TestCountFilmsAcrossWatchlists(t *testing.T) {
-	w1 := &Watchlist{Films: []Film{{Title: "A"}, {Title: "B"}, {Title: "A"}}}
-	w2 := &Watchlist{Films: []Film{{Title: "A"}, {Title: "C"}}}
+	w1 := &Watchlist{Films: []*Film{{Title: "A"}, {Title: "B"}, {Title: "A"}}}
+	w2 := &Watchlist{Films: []*Film{{Title: "A"}, {Title: "C"}}}
 
 	res := countFilmsAcrossWatchlists(map[string]*Watchlist{"w1": w1, "w2": w2})
 
@@ -155,7 +155,7 @@ func TestSelectRandomFilmWithRand(t *testing.T) {
 }
 
 func TestSelectRandomFilmWithRand_NoFilms(t *testing.T) {
-	_, err := selectRandomFilmWithRand([]Film{}, func(n int) int { return 0 })
+	_, err := selectRandomFilmWithRand(nil, func(n int) int { return 0 })
 	if !errors.Is(err, errors.New("no films to select from")) && err == nil {
 		t.Errorf("expected 'no films to select from' error, got %v", err)
 	}
