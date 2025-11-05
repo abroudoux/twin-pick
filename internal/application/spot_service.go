@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/abroudoux/twinpick/internal/domain"
+	"github.com/abroudoux/twinpick/internal/infrastructure/client"
 )
 
 type SpotServiceInterface interface {
@@ -28,9 +29,10 @@ func (s *SpotService) Spot(sp *domain.SpotParams) ([]*domain.Film, error) {
 		fmt.Printf("Film suggested: %+v\n", film)
 	}
 
-	if sp.Limit > 0 && len(films) > sp.Limit {
-		films = films[:sp.Limit]
+	filmsWithDetails, err := client.FetchFilmsDetails(films)
+	if err != nil {
+		return nil, err
 	}
 
-	return films, nil
+	return filmsWithDetails, nil
 }

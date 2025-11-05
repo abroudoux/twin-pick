@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "spot",
+    "arguments": {
+      "genres": ["action"],
+      "limit": 3
+    }
+  }
+}

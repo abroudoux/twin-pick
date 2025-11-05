@@ -1,6 +1,8 @@
 package http
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/abroudoux/twinpick/internal/application"
@@ -19,8 +21,8 @@ func NewServer(ps application.PickServiceInterface, ss application.SpotServiceIn
 	return s
 }
 
-func (s *Server) Run() {
-	s.Router.Run(":8080")
+func (s *Server) Run(port string) {
+	s.Router.Run(fmt.Sprintf(":%s", port))
 }
 
 func (s *Server) registerRoutes(r *gin.Engine) {

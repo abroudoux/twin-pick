@@ -12,5 +12,5 @@ func main() {
 	spotService := application.NewSpotService(provider)
 
 	server := http.NewServer(pickService, spotService)
-	server.Run()
+	server.Run("8080")
 }

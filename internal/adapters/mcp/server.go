@@ -7,39 +7,10 @@ import (
 	"os"
 
 	"github.com/abroudoux/twinpick/internal/application"
-	"github.com/abroudoux/twinpick/internal/domain"
 )
 
-type Request struct {
-	ID     int             `json:"id"`
-	Method string          `json:"method"`
-	Params json.RawMessage `json:"params"`
-}
-
-type Response struct {
-	ID     int         `json:"id"`
-	Result interface{} `json:"result,omitempty"`
-	Error  interface{} `json:"error,omitempty"`
-}
-
-type ToolCall struct {
-	Name      string          `json:"name"`
-	Arguments json.RawMessage `json:"arguments"`
-}
-
-type ProgramArgs struct {
-	Usernames []string `json:"usernames"`
-	Genres    []string `json:"genres,omitempty"`
-	Platform  string   `json:"platform,omitempty"`
-	Limit     int      `json:"limit,omitempty"`
-}
-
-type Server struct {
-	PickService *application.PickService
-}
-
-func NewServer(ps *application.PickService) *Server {
-	return &Server{PickService: ps}
+func NewServer(ps *application.PickService, ss *application.SpotService) *Server {
+	return &Server{PickService: ps, SpotService: ss}
 }
 
 func (s *Server) Run() {
@@ -63,30 +34,9 @@ func (s *Server) Run() {
 
 	switch call.Name {
 	case "pick":
-		var args ProgramArgs
-		if err := json.Unmarshal(call.Arguments, &args); err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid arguments: %v\n", err)
-			return
-		}
-
-		pickParams := domain.NewPickParams(args.Usernames, domain.NewScrapperParams(args.Genres, args.Platform), args.Limit)
-
-		films, err := s.PickService.Pick(pickParams)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Pick error: %v\n", err)
-			return
-		}
-
-		resp := Response{
-			ID: req.ID,
-			Result: map[string]interface{}{
-				"usernames": args.Usernames,
-				"genres":    args.Genres,
-				"platform":  args.Platform,
-				"films":     films,
-			},
-		}
-		json.NewEncoder(os.Stdout).Encode(resp)
+		s.pickTool(req, call)
+	case "spot":
+		s.spotTool(req, call)
 	default:
 		json.NewEncoder(os.Stdout).Encode(Response{ID: req.ID, Error: "Unknown tool"})
 	}

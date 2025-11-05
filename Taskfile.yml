@@ -67,7 +67,7 @@ tasks:
   test:mcp:
     desc: "Run tests for Twinpick MCP server"
     cmds:
-      - ./TESTS_DIR/mcp_test.sh
+      - ./{{.TESTS_DIR}}/mcp_test.sh
 
   default:
     desc: "Start Twinpick API server in development mode"

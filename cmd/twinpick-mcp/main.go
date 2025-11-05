@@ -9,7 +9,8 @@ import (
 func main() {
 	provider := scrapper.NewLetterboxdScrapper()
 	pickService := application.NewPickService(provider)
+	spotService := application.NewSpotService(provider)
 
-	server := mcp.NewServer(pickService)
+	server := mcp.NewServer(pickService, spotService)
 	server.Run()
 }
