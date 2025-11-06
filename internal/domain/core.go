@@ -13,13 +13,6 @@ func NewWatchlist(username string) *Watchlist {
 	}
 }
 
-func NewFilm(name, detailsEndpoint string) *Film {
-	return &Film{
-		Title:           name,
-		DetailsEndpoint: detailsEndpoint,
-	}
-}
-
 func NewScrapperParams(genres []string, platform string) *ScrapperParams {
 	return &ScrapperParams{
 		Genres:   genres,

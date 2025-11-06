@@ -16,7 +16,11 @@ func runPick(cmd *cobra.Command, args []string) error {
 	}
 
 	userList := strings.Split(usernames, ",")
-	genreList := []string{}
+	for i := range userList {
+		userList[i] = strings.TrimSpace(userList[i])
+	}
+
+	var genreList []string
 	if genres != "" {
 		for _, g := range strings.Split(genres, ",") {
 			if trimmed := strings.TrimSpace(g); trimmed != "" {
@@ -25,11 +29,29 @@ func runPick(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	pickParams := domain.NewPickParams(userList, domain.NewScrapperParams(genreList, platform), limit, domain.Long)
+	var dur domain.Duration
+	switch strings.ToLower(strings.TrimSpace(duration)) {
+	case "short":
+		dur = domain.Short
+	case "medium":
+		dur = domain.Medium
+	case "long", "":
+		dur = domain.Long
+	default:
+		dur = domain.Long
+	}
+
+	platform = strings.TrimSpace(platform)
+
+	scrapperParams := domain.NewScrapperParams(genreList, platform)
+	pickParams := domain.NewPickParams(userList, scrapperParams, limit, dur)
+
+	log.Infof("▶️ Running pick with usernames=%v, genres=%v, platform=%q, limit=%d, duration=%v",
+		userList, genreList, platform, limit, dur.String())
 
 	films, err := pickService.Pick(pickParams)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to pick films: %w", err)
 	}
 
 	if len(films) == 0 {
@@ -38,8 +60,8 @@ func runPick(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Infof("🎬 Picked films:")
-	for i, f := range films {
-		log.Infof("%d. %s", i+1, f.Title)
+	for _, f := range films {
+		log.Infof("%s", f.Title)
 	}
 
 	return nil

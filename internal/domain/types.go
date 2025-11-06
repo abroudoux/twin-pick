@@ -1,13 +1,5 @@
 package domain
 
-type Film struct {
-	Title           string   `json:"title"`
-	Duration        int      `json:"duration"`
-	Directors       []string `json:"directors"`
-	DetailsEndpoint string   `json:"-"`
-	Year            int      `json:"year"`
-}
-
 type Watchlist struct {
 	Username string
 	Films    []*Film
