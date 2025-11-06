@@ -1,8 +1,6 @@
 package application
 
 import (
-	"fmt"
-
 	"github.com/abroudoux/twinpick/internal/domain"
 	"github.com/abroudoux/twinpick/internal/infrastructure/client"
 )
@@ -23,10 +21,6 @@ func (s *SpotService) Spot(sp *domain.SpotParams) ([]*domain.Film, error) {
 	films, err := s.SuggestionsProvider.GetSuggestions(sp.ScrapperParams)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, film := range films {
-		fmt.Printf("Film suggested: %+v\n", film)
 	}
 
 	filmsWithDetails, err := client.FetchFilmsDetails(films)

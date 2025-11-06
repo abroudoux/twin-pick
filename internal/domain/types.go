@@ -22,6 +22,7 @@ type PickParams struct {
 	Usernames      []string
 	ScrapperParams *ScrapperParams
 	Limit          int
+	Duration       Duration
 }
 
 type SpotParams struct {

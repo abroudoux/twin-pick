@@ -51,5 +51,15 @@ func returnPickParams(ctx *gin.Context) (*domain.PickParams, error) {
 		}
 	}
 
-	return domain.NewPickParams(usernames, domain.NewScrapperParams(genres, platform), limit), nil
+	duration := domain.Long
+	if d := ctx.Query("duration"); d != "" {
+		switch d {
+		case "short":
+			duration = domain.Short
+		case "medium":
+			duration = domain.Medium
+		}
+	}
+
+	return domain.NewPickParams(usernames, domain.NewScrapperParams(genres, platform), limit, duration), nil
 }

@@ -1,14 +1,23 @@
 package scrapper
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/charmbracelet/log"
 	"github.com/gocolly/colly/v2"
 
 	"github.com/abroudoux/twinpick/internal/domain"
+)
+
+const (
+	maxConcurrentPages = 30
+	pageTimeout        = 5 * time.Second
+	totalTimeout       = 30 * time.Second
 )
 
 func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperParams) (*domain.Watchlist, error) {
@@ -17,48 +26,91 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 
 	totalPages, err := s.GetTotalWatchlistPages(watchlistURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get total pages: %w", err)
 	}
 
-	const maxConcurrent = 10
-	pageCh := make(chan int, totalPages)
-	filmCh := make(chan []*domain.Film, totalPages)
-	errCh := make(chan error, totalPages)
-
-	for i := 1; i <= totalPages; i++ {
-		pageCh <- i
+	if totalPages == 0 {
+		return watchlist, nil
 	}
-	close(pageCh)
+
+	ctx, cancel := context.WithTimeout(context.Background(), totalTimeout)
+	defer cancel()
+
+	estimatedFilms := totalPages * 28
+	allFilms := make([]*domain.Film, 0, estimatedFilms)
+
+	type pageResult struct {
+		films []*domain.Film
+		page  int
+		err   error
+	}
+
+	resultCh := make(chan pageResult, totalPages)
+	semaphore := make(chan struct{}, maxConcurrentPages)
 
 	var wg sync.WaitGroup
 
-	for range make([]struct{}, maxConcurrent) {
+	for page := 1; page <= totalPages; page++ {
+		select {
+		case <-ctx.Done():
+			continue
+		default:
+		}
+
 		wg.Add(1)
-		go func() {
+		go func(pageNum int) {
 			defer wg.Done()
-			for page := range pageCh {
-				films, err := s.GetFilmsOnWatchlistPage(watchlistURL, page)
-				if err != nil {
-					errCh <- err
-					return
-				}
-				filmCh <- films
+
+			select {
+			case semaphore <- struct{}{}:
+				defer func() { <-semaphore }()
+			case <-ctx.Done():
+				resultCh <- pageResult{err: ctx.Err(), page: pageNum}
+				return
 			}
-		}()
+
+			films, err := s.GetFilmsOnWatchlistPage(watchlistURL, pageNum)
+			resultCh <- pageResult{
+				films: films,
+				page:  pageNum,
+				err:   err,
+			}
+		}(page)
 	}
 
-	wg.Wait()
-	close(filmCh)
-	close(errCh)
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
 
-	for fs := range filmCh {
-		watchlist.Films = append(watchlist.Films, fs...)
+	errors := make([]error, 0)
+	successCount := 0
+
+	for result := range resultCh {
+		if result.err != nil {
+			errors = append(errors, fmt.Errorf("page %d: %w", result.page, result.err))
+			continue
+		}
+
+		allFilms = append(allFilms, result.films...)
+		successCount++
 	}
 
-	if len(errCh) > 0 {
-		return nil, <-errCh
+	if len(errors) > 0 {
+		if successCount == 0 {
+			return nil, fmt.Errorf("all pages failed: %v", errors[0])
+		}
+
+		if len(errors) > totalPages/2 {
+			return nil, fmt.Errorf("too many failures (%d/%d): %v",
+				len(errors), totalPages, errors[0])
+		}
+
+		log.Warnf("Partial success: %d/%d pages retrieved, %d errors",
+			successCount, totalPages, len(errors))
 	}
 
+	watchlist.Films = allFilms
 	return watchlist, nil
 }
 

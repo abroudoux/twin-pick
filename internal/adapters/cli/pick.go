@@ -25,7 +25,7 @@ func runPick(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	pickParams := domain.NewPickParams(userList, domain.NewScrapperParams(genreList, platform), limit)
+	pickParams := domain.NewPickParams(userList, domain.NewScrapperParams(genreList, platform), limit, domain.Long)
 
 	films, err := pickService.Pick(pickParams)
 	if err != nil {

@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"math/rand"
+	"sync"
 )
 
 func NewWatchlist(username string) *Watchlist {
@@ -26,11 +27,12 @@ func NewScrapperParams(genres []string, platform string) *ScrapperParams {
 	}
 }
 
-func NewPickParams(usernames []string, scrapperParams *ScrapperParams, limit int) *PickParams {
+func NewPickParams(usernames []string, scrapperParams *ScrapperParams, limit int, duration Duration) *PickParams {
 	return &PickParams{
 		Usernames:      usernames,
 		ScrapperParams: scrapperParams,
 		Limit:          limit,
+		Duration:       duration,
 	}
 }
 
@@ -81,4 +83,40 @@ func selectRandomFilmWithRand(films []*Film, randFn func(int) int) (*Film, error
 		return nil, errors.New("no films to select from")
 	}
 	return films[randFn(len(films))], nil
+}
+
+func FilterFilmsByDuration(films []*Film, duration Duration) []*Film {
+	var (
+		mu            sync.Mutex
+		filteredFilms []*Film
+		wg            sync.WaitGroup
+	)
+
+	for _, film := range films {
+		wg.Add(1)
+		go func(film *Film) {
+			defer wg.Done()
+
+			var shouldInclude bool
+			switch {
+			case film.Duration == 0:
+				shouldInclude = true
+			case duration == Short:
+				shouldInclude = film.Duration <= 100
+			case duration == Medium:
+				shouldInclude = film.Duration <= 120
+			case duration == Long:
+				shouldInclude = true
+			}
+
+			if shouldInclude {
+				mu.Lock()
+				filteredFilms = append(filteredFilms, film)
+				mu.Unlock()
+			}
+		}(film)
+	}
+
+	wg.Wait()
+	return filteredFilms
 }

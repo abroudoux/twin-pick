@@ -20,6 +20,8 @@ func NewPickService(wp domain.WatchlistProvider) *PickService {
 }
 
 func (s *PickService) Pick(pp *domain.PickParams) ([]*domain.Film, error) {
+	var filmsDetailsFetched bool
+
 	watchlists, err := s.collectWatchlists(pp.Usernames, pp.ScrapperParams)
 	if err != nil {
 		return nil, err
@@ -30,16 +32,28 @@ func (s *PickService) Pick(pp *domain.PickParams) ([]*domain.Film, error) {
 		return nil, err
 	}
 
+	if pp.Duration != domain.Long {
+		films, err := client.FetchFilmsDetails(films)
+		if err != nil {
+			return nil, err
+		}
+		filmsDetailsFetched = true
+
+		films = domain.FilterFilmsByDuration(films, pp.Duration)
+	}
+
 	if pp.Limit > 0 && len(films) > pp.Limit {
 		films = films[:pp.Limit]
 	}
 
-	filmsWithDetails, err := client.FetchFilmsDetails(films)
-	if err != nil {
-		return nil, err
+	if !filmsDetailsFetched {
+		films, err = client.FetchFilmsDetails(films)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return filmsWithDetails, nil
+	return films, nil
 }
 
 func (s *PickService) collectWatchlists(usernames []string, params *domain.ScrapperParams) (map[string]*domain.Watchlist, error) {
