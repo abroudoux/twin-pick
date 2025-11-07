@@ -19,14 +19,14 @@ func CompareWatchlists(watchlists map[string]*Watchlist) ([]*Film, error) {
 		return nil, errors.New("no watchlists provided")
 	}
 
-	type filmKey struct{ Endpoint string }
+	type filmKey struct{ Title string }
 	filmMap := make(map[filmKey]*Film)
 	filmCount := make(map[filmKey]int)
 
 	for _, wl := range watchlists {
 		seen := make(map[filmKey]bool)
 		for _, f := range wl.Films {
-			key := filmKey{Endpoint: f.DetailsEndpoint}
+			key := filmKey{Title: f.Title}
 			filmMap[key] = f
 			if !seen[key] {
 				filmCount[key]++
@@ -38,6 +38,9 @@ func CompareWatchlists(watchlists map[string]*Watchlist) ([]*Film, error) {
 	var commonFilms []*Film
 	for key, count := range filmCount {
 		if count == len(watchlists) {
+			commonFilms = append(commonFilms, filmMap[key])
+		}
+		if count >= len(watchlists)/2 {
 			commonFilms = append(commonFilms, filmMap[key])
 		}
 	}
