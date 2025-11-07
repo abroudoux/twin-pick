@@ -29,22 +29,13 @@ func runPick(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	var dur domain.Duration
-	switch strings.ToLower(strings.TrimSpace(duration)) {
-	case "short":
-		dur = domain.Short
-	case "medium":
-		dur = domain.Medium
-	case "long", "":
-		dur = domain.Long
-	default:
-		dur = domain.Long
-	}
-
+	dur := domain.GetDurationFromString(duration)
 	platform = strings.TrimSpace(platform)
 
+	filters := domain.NewFilters(limit, dur)
 	scrapperParams := domain.NewScrapperParams(genreList, platform)
-	pickParams := domain.NewPickParams(userList, scrapperParams, limit, dur)
+	params := domain.NewParams(filters, scrapperParams)
+	pickParams := domain.NewPickParams(userList, params)
 
 	log.Infof("▶️ Running pick with usernames=%v, genres=%v, platform=%q, limit=%d, duration=%v",
 		userList, genreList, platform, limit, dur.String())

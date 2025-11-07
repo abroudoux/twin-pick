@@ -7,3 +7,7 @@ type WatchlistProvider interface {
 type SuggestionsProvider interface {
 	GetSuggestions(scrapperParams *ScrapperParams) ([]*Film, error)
 }
+
+type DetailsProvider interface {
+	GetFilmDetails(film *Film) (*Film, error)
+}

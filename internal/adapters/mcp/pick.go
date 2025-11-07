@@ -15,7 +15,10 @@ func (s *Server) pickTool(req Request, call ToolCall) {
 		return
 	}
 
-	pickParams := domain.NewPickParams(args.Usernames, domain.NewScrapperParams(args.Genres, args.Platform), args.Limit, domain.Long)
+	filters := domain.NewFilters(args.Limit, domain.GetDurationFromInt(args.Duration))
+	scrapperParams := domain.NewScrapperParams(args.Genres, args.Platform)
+	params := domain.NewParams(filters, scrapperParams)
+	pickParams := domain.NewPickParams(args.Usernames, params)
 
 	films, err := s.PickService.Pick(pickParams)
 	if err != nil {
@@ -29,6 +32,7 @@ func (s *Server) pickTool(req Request, call ToolCall) {
 			"usernames": args.Usernames,
 			"genres":    args.Genres,
 			"platform":  args.Platform,
+			"duration":  args.Duration,
 			"films":     films,
 		},
 	}

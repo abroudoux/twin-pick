@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	provider := scrapper.NewLetterboxdScrapper()
-	pickService := application.NewPickService(provider)
-	spotService := application.NewSpotService(provider)
+	letterboxdScrapper := scrapper.NewLetterboxdScrapper()
+	pickService := application.NewPickService(letterboxdScrapper)
+	spotService := application.NewSpotService(letterboxdScrapper)
 
 	cli.Execute(pickService, spotService)
 }

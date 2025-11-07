@@ -8,21 +8,19 @@ import (
 )
 
 type PickServiceInterface interface {
-	Pick(pp *domain.PickParams) ([]*domain.Film, error)
+	Pick(pickParams *domain.PickParams) ([]*domain.Film, error)
 }
 
 type PickService struct {
 	WatchlistProvider domain.WatchlistProvider
 }
 
-func NewPickService(wp domain.WatchlistProvider) *PickService {
-	return &PickService{WatchlistProvider: wp}
+func NewPickService(watchlistProvider domain.WatchlistProvider) *PickService {
+	return &PickService{WatchlistProvider: watchlistProvider}
 }
 
-func (s *PickService) Pick(pp *domain.PickParams) ([]*domain.Film, error) {
-	var filmsDetailsFetched bool
-
-	watchlists, err := s.collectWatchlists(pp.Usernames, pp.ScrapperParams)
+func (s *PickService) Pick(pickParams *domain.PickParams) ([]*domain.Film, error) {
+	watchlists, err := s.collectWatchlists(pickParams)
 	if err != nil {
 		return nil, err
 	}
@@ -32,22 +30,24 @@ func (s *PickService) Pick(pp *domain.PickParams) ([]*domain.Film, error) {
 		return nil, err
 	}
 
-	if pp.Duration != domain.Long {
-		films, err := client.FetchFilmsDetails(films)
+	var detailsFetched bool
+
+	if pickParams.Params.Filters.Duration != domain.Long {
+		films, err := client.GetFilmsDetails(films)
 		if err != nil {
 			return nil, err
 		}
-		filmsDetailsFetched = true
+		detailsFetched = true
 
-		films = domain.FilterFilmsByDuration(films, pp.Duration)
+		films = domain.FilterFilmsByDuration(films, pickParams.Params.Filters.Duration)
 	}
 
-	if pp.Limit > 0 && len(films) > pp.Limit {
-		films = films[:pp.Limit]
+	if pickParams.Params.Filters.Limit > 0 && len(films) > pickParams.Params.Filters.Limit {
+		films = films[:pickParams.Params.Filters.Limit]
 	}
 
-	if !filmsDetailsFetched {
-		films, err = client.FetchFilmsDetails(films)
+	if !detailsFetched {
+		films, err = client.GetFilmsDetails(films)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func (s *PickService) Pick(pp *domain.PickParams) ([]*domain.Film, error) {
 	return films, nil
 }
 
-func (s *PickService) collectWatchlists(usernames []string, params *domain.ScrapperParams) (map[string]*domain.Watchlist, error) {
+func (s *PickService) collectWatchlists(pickParams *domain.PickParams) (usersWatchlists map[string]*domain.Watchlist, err error) {
 	var (
 		mu         sync.Mutex
 		wg         sync.WaitGroup
@@ -64,11 +64,11 @@ func (s *PickService) collectWatchlists(usernames []string, params *domain.Scrap
 		firstError error
 	)
 
-	for _, user := range usernames {
+	for _, user := range pickParams.Usernames {
 		wg.Add(1)
 		go func(username string) {
 			defer wg.Done()
-			wl, err := s.WatchlistProvider.GetWatchlist(username, params)
+			wl, err := s.WatchlistProvider.GetWatchlist(username, pickParams.Params.ScrapperParams)
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil && firstError == nil {

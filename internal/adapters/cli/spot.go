@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -20,10 +19,10 @@ func runSpot(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	spotParams := domain.NewSpotParams(domain.NewScrapperParams(genreList, platform), limit)
-
-	fmt.Print(spotParams.ScrapperParams.Genres)
-	fmt.Print(spotParams.Limit)
+	filters := domain.NewFilters(limit, domain.GetDurationFromString(duration))
+	scrapperParams := domain.NewScrapperParams(genreList, platform)
+	params := domain.NewParams(filters, scrapperParams)
+	spotParams := domain.NewSpotParams(params)
 
 	films, err := spotService.Spot(spotParams)
 	if err != nil {

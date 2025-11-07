@@ -47,14 +47,15 @@ func (f *Film) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func cleanTitle(t string) string {
+func cleanTitle(title string) string {
 	re := regexp.MustCompile(`\s*\(\d{4}\)$`)
-	return strings.TrimSpace(re.ReplaceAllString(t, ""))
+	return strings.TrimSpace(re.ReplaceAllString(title, ""))
 }
 
-func extractYearFromTitle(t string) int {
+func extractYearFromTitle(title string) int {
 	re := regexp.MustCompile(`\((\d{4})\)`)
-	matches := re.FindStringSubmatch(t)
+	matches := re.FindStringSubmatch(title)
+
 	if len(matches) > 1 {
 		if year, err := strconv.Atoi(matches[1]); err == nil {
 			return year
@@ -63,23 +64,23 @@ func extractYearFromTitle(t string) int {
 	return 0
 }
 
-func formatDuration(d int) string {
-	if d == 0 {
+func formatDuration(duration int) string {
+	if duration == 0 {
 		return "not found"
 	}
-	return fmt.Sprintf("%d min", d)
+	return fmt.Sprintf("%d min", duration)
 }
 
-func formatDirectors(d []string) string {
-	if len(d) == 0 {
+func formatDirectors(directors []string) string {
+	if len(directors) == 0 {
 		return "not found"
 	}
-	return strings.Join(d, ", ")
+	return strings.Join(directors, ", ")
 }
 
-func formatYear(y int) string {
-	if y == 0 {
+func formatYear(year int) string {
+	if year == 0 {
 		return "not found"
 	}
-	return fmt.Sprintf("%d", y)
+	return fmt.Sprintf("%d", year)
 }

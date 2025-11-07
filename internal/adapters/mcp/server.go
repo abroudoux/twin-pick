@@ -9,8 +9,8 @@ import (
 	"github.com/abroudoux/twinpick/internal/application"
 )
 
-func NewServer(ps *application.PickService, ss *application.SpotService) *Server {
-	return &Server{PickService: ps, SpotService: ss}
+func NewServer(pickService *application.PickService, spotService *application.SpotService) *Server {
+	return &Server{PickService: pickService, SpotService: spotService}
 }
 
 func (s *Server) Run() {

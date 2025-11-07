@@ -28,6 +28,7 @@ type ProgramArgs struct {
 	Genres    []string `json:"genres,omitempty"`
 	Platform  string   `json:"platform,omitempty"`
 	Limit     int      `json:"limit,omitempty"`
+	Duration  int      `json:"duration,omitempty"`
 }
 
 type Server struct {

@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/abroudoux/twinpick/internal/domain"
 	"github.com/charmbracelet/log"
+
+	"github.com/abroudoux/twinpick/internal/domain"
 )
 
 type filmDetailsResponse struct {
@@ -20,7 +21,7 @@ type filmDetailsResponse struct {
 	} `json:"directors"`
 }
 
-func FetchFilmsDetails(films []*domain.Film) ([]*domain.Film, error) {
+func GetFilmsDetails(films []*domain.Film) ([]*domain.Film, error) {
 	if films == nil {
 		return nil, nil
 	}
