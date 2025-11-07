@@ -16,7 +16,6 @@ import (
 
 const (
 	maxConcurrentPages = 30
-	pageTimeout        = 5 * time.Second
 	totalTimeout       = 30 * time.Second
 )
 
@@ -155,16 +154,4 @@ func (s *LetterboxdScrapper) getFilmsOnWatchlistPageImpl(watchlistURL string, pa
 
 	collector.Wait()
 	return films, nil
-}
-
-func buildWatchlistURL(username string, params *domain.ScrapperParams) string {
-	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist", username)
-
-	if len(params.Genres) > 0 {
-		url += "/genre/" + strings.Join(params.Genres, "+")
-	}
-	if params.Platform != "" {
-		url += fmt.Sprintf("/on/%s", params.Platform)
-	}
-	return url
 }

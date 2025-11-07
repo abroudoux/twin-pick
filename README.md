@@ -38,7 +38,7 @@ task run:cli -- --usernames abroudoux,potatoze --genres action --limit 1
 ## Todo
 
 - [ ] Can't handle genres & platform at the same time
-- [x] Return film details
+- [ ] Return film details
 - [ ] Duration filter
 - [ ] Spot mode (wip...)
 - [ ] TUI mode
