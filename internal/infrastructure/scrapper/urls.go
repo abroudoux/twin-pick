@@ -7,7 +7,7 @@ import (
 	"github.com/abroudoux/twinpick/internal/domain"
 )
 
-func buildWatchlistURL(username string, params *domain.ScrapperParams) string {
+func buildWatchlistURL(username string, params *domain.ScrapperFilters) string {
 	url := fmt.Sprintf("https://letterboxd.com/%s/watchlist", username)
 
 	if len(params.Genres) > 0 {
@@ -19,7 +19,7 @@ func buildWatchlistURL(username string, params *domain.ScrapperParams) string {
 	return url
 }
 
-func buildPopularFilmsURL(params *domain.ScrapperParams) string {
+func buildPopularFilmsURL(params *domain.ScrapperFilters) string {
 	url := "https://letterboxd.com/films/popular"
 
 	if len(params.Genres) > 0 {

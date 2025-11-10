@@ -19,7 +19,7 @@ const (
 	totalTimeout       = 30 * time.Second
 )
 
-func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperParams) (*domain.Watchlist, error) {
+func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperFilters) (*domain.Watchlist, error) {
 	watchlist := domain.NewWatchlist(username)
 	watchlistURL := buildWatchlistURL(username, params)
 

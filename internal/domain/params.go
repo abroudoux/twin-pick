@@ -1,18 +1,8 @@
 package domain
 
-type Filters struct {
-	Limit    int
-	Duration Duration
-}
-
-type ScrapperParams struct {
-	Genres   []string
-	Platform string
-}
-
 type Params struct {
-	Filters        *Filters
-	ScrapperParams *ScrapperParams
+	Filters         *Filters
+	ScrapperFilters *ScrapperFilters
 }
 
 type PickParams struct {
@@ -24,24 +14,10 @@ type SpotParams struct {
 	Params *Params
 }
 
-func NewScrapperParams(genres []string, platform string) *ScrapperParams {
-	return &ScrapperParams{
-		Genres:   genres,
-		Platform: platform,
-	}
-}
-
-func NewFilters(limit int, duration Duration) *Filters {
-	return &Filters{
-		Limit:    limit,
-		Duration: duration,
-	}
-}
-
-func NewParams(filters *Filters, scrapperParams *ScrapperParams) *Params {
+func NewParams(filters *Filters, scrapperFilters *ScrapperFilters) *Params {
 	return &Params{
-		Filters:        filters,
-		ScrapperParams: scrapperParams,
+		Filters:         filters,
+		ScrapperFilters: scrapperFilters,
 	}
 }
 

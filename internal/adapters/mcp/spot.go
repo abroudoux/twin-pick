@@ -16,8 +16,8 @@ func (s *Server) spotTool(req Request, call ToolCall) {
 	}
 
 	filters := domain.NewFilters(args.Limit, domain.GetDurationFromInt(args.Duration))
-	scrapperParams := domain.NewScrapperParams(args.Genres, args.Platform)
-	params := domain.NewParams(filters, scrapperParams)
+	scrapperFilters := domain.NewScrapperFilters(args.Genres, args.Platform, domain.OrderFilterPopular)
+	params := domain.NewParams(filters, scrapperFilters)
 	spotParams := domain.NewSpotParams(params)
 
 	films, err := s.SpotService.Spot(spotParams)

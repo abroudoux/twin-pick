@@ -20,8 +20,8 @@ func runSpot(cmd *cobra.Command, args []string) error {
 	}
 
 	filters := domain.NewFilters(limit, domain.GetDurationFromString(duration))
-	scrapperParams := domain.NewScrapperParams(genreList, platform)
-	params := domain.NewParams(filters, scrapperParams)
+	scrapperFilters := domain.NewScrapperFilters(genreList, platform, domain.OrderFilterPopular)
+	params := domain.NewParams(filters, scrapperFilters)
 	spotParams := domain.NewSpotParams(params)
 
 	films, err := spotService.Spot(spotParams)

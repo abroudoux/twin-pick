@@ -7,7 +7,7 @@ import (
 	"github.com/abroudoux/twinpick/internal/domain"
 )
 
-func (s *LetterboxdScrapper) GetSuggestions(params *domain.ScrapperParams) ([]*domain.Film, error) {
+func (s *LetterboxdScrapper) GetSuggestions(params *domain.ScrapperFilters) ([]*domain.Film, error) {
 	popularFilmsURL := buildPopularFilmsURL(params)
 
 	favouritesFilms, err := s.GetFavouritesFilms("abroudoux")

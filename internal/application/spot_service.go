@@ -18,7 +18,7 @@ func NewSpotService(suggestionsProvider domain.SuggestionsProvider) *SpotService
 }
 
 func (s *SpotService) Spot(spotParams *domain.SpotParams) ([]*domain.Film, error) {
-	films, err := s.SuggestionsProvider.GetSuggestions(spotParams.Params.ScrapperParams)
+	films, err := s.SuggestionsProvider.GetSuggestions(spotParams.Params.ScrapperFilters)
 	if err != nil {
 		return nil, err
 	}

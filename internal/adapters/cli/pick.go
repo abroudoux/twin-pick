@@ -33,8 +33,8 @@ func runPick(cmd *cobra.Command, args []string) error {
 	platform = strings.TrimSpace(platform)
 
 	filters := domain.NewFilters(limit, dur)
-	scrapperParams := domain.NewScrapperParams(genreList, platform)
-	params := domain.NewParams(filters, scrapperParams)
+	scrapperFilters := domain.NewScrapperFilters(genreList, platform, domain.OrderFilterPopular)
+	params := domain.NewParams(filters, scrapperFilters)
 	pickParams := domain.NewPickParams(userList, params)
 
 	log.Infof("▶️ Running pick with usernames=%v, genres=%v, platform=%q, limit=%d, duration=%v",

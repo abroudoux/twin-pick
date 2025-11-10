@@ -25,9 +25,9 @@ func parseParams(ctx *gin.Context) (params *domain.Params) {
 	platform = ctx.Query("platform")
 
 	filters := parseFiltsers(ctx)
-	scrapperParams := domain.NewScrapperParams(genres, platform)
+	scrapperFilters := domain.NewScrapperFilters(genres, platform, domain.OrderFilterPopular)
 
-	return domain.NewParams(filters, scrapperParams)
+	return domain.NewParams(filters, scrapperFilters)
 }
 
 func parseFiltsers(ctx *gin.Context) (filters *domain.Filters) {

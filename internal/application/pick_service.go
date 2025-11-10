@@ -68,7 +68,7 @@ func (s *PickService) collectWatchlists(pickParams *domain.PickParams) (usersWat
 		wg.Add(1)
 		go func(username string) {
 			defer wg.Done()
-			wl, err := s.WatchlistProvider.GetWatchlist(username, pickParams.Params.ScrapperParams)
+			wl, err := s.WatchlistProvider.GetWatchlist(username, pickParams.Params.ScrapperFilters)
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil && firstError == nil {
