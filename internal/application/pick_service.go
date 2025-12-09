@@ -46,11 +46,13 @@ func (s *PickService) Pick(pickParams *domain.PickParams) ([]*domain.Film, error
 		films = films[:pickParams.Params.Filters.Limit]
 	}
 
-	if !detailsFetched {
-		films, err = client.GetFilmsDetails(films)
-		if err != nil {
-			return nil, err
-		}
+	if detailsFetched {
+		return films, nil
+	}
+
+	films, err = client.GetFilmsDetails(films)
+	if err != nil {
+		return nil, err
 	}
 
 	return films, nil

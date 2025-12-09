@@ -10,6 +10,9 @@ const (
 	Long
 )
 
+const DURATION_SHORT = 100
+const DURATION_MEDIUM = 120
+
 func (d Duration) String() string {
 	switch d {
 	case Short:
@@ -66,9 +69,9 @@ func FilterFilmsByDuration(films []*Film, duration Duration) []*Film {
 			case film.Duration == 0:
 				shouldInclude = true
 			case duration == Short:
-				shouldInclude = film.Duration <= 100
+				shouldInclude = film.Duration <= DURATION_SHORT
 			case duration == Medium:
-				shouldInclude = film.Duration <= 120
+				shouldInclude = film.Duration <= DURATION_MEDIUM
 			case duration == Long:
 				shouldInclude = true
 			}
