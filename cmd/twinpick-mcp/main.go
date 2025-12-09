@@ -8,8 +8,10 @@ import (
 
 func main() {
 	letterboxdScrapper := scrapper.NewLetterboxdScrapper()
+	browserScrapper := scrapper.NewBrowserScrapper()
+
 	pickService := application.NewPickService(letterboxdScrapper)
-	spotService := application.NewSpotService(letterboxdScrapper)
+	spotService := application.NewSpotService(browserScrapper)
 
 	server := mcp.NewServer(pickService, spotService)
 	server.Run()

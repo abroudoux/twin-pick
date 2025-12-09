@@ -25,9 +25,16 @@ get() {
 }
 
 endpoints=(
+    # Pick tests
     "/v1/pick?usernames=abroudoux,potatoze&limit=1"
     "/v1/pick?usernames=abroudoux,potatoze&genres=action&limit=15"
+
+    # Spot tests - films populaires
+    "/v1/spot?limit=5"
     "/v1/spot?genres=action&limit=10"
+    "/v1/spot?genres=horror&limit=5"
+    "/v1/spot?genres=comedy&limit=5"
+    "/v1/spot?genres=thriller,action&limit=10"
 )
 
 for ep in "${endpoints[@]}"; do
