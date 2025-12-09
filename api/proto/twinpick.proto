@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package twinpick;
+
+option go_package = "github.com/abroudoux/twinpick/api/pb";
+
+// TwinPickService expose les fonctionnalités de découverte de films
+service TwinPickService {
+  // Pick retourne les films en commun entre plusieurs watchlists Letterboxd
+  rpc Pick(PickRequest) returns (PickResponse);
+
+  // Spot retourne des suggestions de films populaires
+  rpc Spot(SpotRequest) returns (SpotResponse);
+
+  // PickStream retourne les films en streaming (un par un)
+  rpc PickStream(PickRequest) returns (stream Film);
+
+  // SpotStream retourne les suggestions en streaming
+  rpc SpotStream(SpotRequest) returns (stream Film);
+}
+
+// Film représente un film avec ses métadonnées
+message Film {
+  string title = 1;
+  int32 duration = 2;        // durée en minutes
+  repeated string directors = 3;
+  int32 year = 4;
+}
+
+// Filters contient les filtres de résultats
+message Filters {
+  int32 limit = 1;           // nombre max de résultats (0 = pas de limite)
+  Duration duration = 2;     // filtre par durée
+}
+
+// Duration définit les catégories de durée
+enum Duration {
+  DURATION_LONG = 0;         // pas de limite (défaut)
+  DURATION_SHORT = 1;        // <= 100 min
+  DURATION_MEDIUM = 2;       // <= 120 min
+}
+
+// OrderFilter définit l'ordre de tri
+enum OrderFilter {
+  ORDER_POPULAR = 0;         // par popularité (défaut)
+  ORDER_HIGHEST_RATED = 1;   // par note
+  ORDER_NEWEST = 2;          // par date
+  ORDER_SHORTEST = 3;        // par durée
+}
+
+// ScrapperFilters contient les filtres pour le scraping Letterboxd
+message ScrapperFilters {
+  repeated string genres = 1;  // genres à filtrer
+  string platform = 2;         // plateforme de streaming (ex: "netflix-fr")
+  OrderFilter order = 3;       // ordre de tri
+}
+
+// PickRequest est la requête pour trouver des films en commun
+message PickRequest {
+  repeated string usernames = 1;  // noms d'utilisateurs Letterboxd (requis)
+  Filters filters = 2;            // filtres optionnels
+  ScrapperFilters scrapper_filters = 3;  // filtres de scraping optionnels
+}
+
+// PickResponse est la réponse contenant les films en commun
+message PickResponse {
+  repeated Film films = 1;
+  int32 total_count = 2;  // nombre total de films trouvés
+}
+
+// SpotRequest est la requête pour obtenir des suggestions
+message SpotRequest {
+  Filters filters = 1;
+  ScrapperFilters scrapper_filters = 2;
+}
+
+// SpotResponse est la réponse contenant les suggestions
+message SpotResponse {
+  repeated Film films = 1;
+  int32 total_count = 2;
+}
