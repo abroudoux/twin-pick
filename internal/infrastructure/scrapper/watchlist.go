@@ -12,16 +12,30 @@ import (
 	"github.com/gocolly/colly/v2"
 
 	"github.com/abroudoux/twinpick/internal/domain"
+	"github.com/abroudoux/twinpick/internal/infrastructure/cache"
 )
 
 const (
-	maxConcurrentPages = 30
+	maxConcurrentPages = 15
 	totalTimeout       = 30 * time.Second
+	watchlistTTL       = 10 * time.Minute
 )
 
+var watchlistCache = cache.New()
+
 func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.ScrapperFilters) (*domain.Watchlist, error) {
-	watchlist := domain.NewWatchlist(username)
 	watchlistURL := buildWatchlistURL(username, params)
+
+	// Check cache first
+	if cached, found := watchlistCache.Get(watchlistURL); found {
+		watchlist := cached.(*domain.Watchlist)
+		log.Infof("Watchlist cache hit for %s: %d films", username, len(watchlist.Films))
+		return watchlist, nil
+	}
+
+	log.Infof("Watchlist cache miss for %s, scraping...", username)
+
+	watchlist := domain.NewWatchlist(username)
 
 	totalPages, err := s.GetTotalWatchlistPages(watchlistURL)
 	if err != nil {
@@ -110,6 +124,13 @@ func (s *LetterboxdScrapper) GetWatchlist(username string, params *domain.Scrapp
 	}
 
 	watchlist.Films = allFilms
+
+	// Cache the watchlist
+	if len(allFilms) > 0 {
+		watchlistCache.Set(watchlistURL, watchlist, watchlistTTL)
+		log.Infof("Cached watchlist for %s: %d films (TTL 10min)", username, len(allFilms))
+	}
+
 	return watchlist, nil
 }
 

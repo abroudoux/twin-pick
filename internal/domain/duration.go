@@ -1,7 +1,5 @@
 package domain
 
-import "sync"
-
 type Duration int
 
 const (
@@ -53,37 +51,29 @@ func GetDurationFromInt(i int) Duration {
 }
 
 func FilterFilmsByDuration(films []*Film, duration Duration) []*Film {
-	var (
-		mu            sync.Mutex
-		filteredFilms []*Film
-		wg            sync.WaitGroup
-	)
-
-	for _, film := range films {
-		wg.Add(1)
-		go func(film *Film) {
-			defer wg.Done()
-
-			var shouldInclude bool
-			switch {
-			case film.Duration == 0:
-				shouldInclude = true
-			case duration == Short:
-				shouldInclude = film.Duration <= DURATION_SHORT
-			case duration == Medium:
-				shouldInclude = film.Duration <= DURATION_MEDIUM
-			case duration == Long:
-				shouldInclude = true
-			}
-
-			if shouldInclude {
-				mu.Lock()
-				filteredFilms = append(filteredFilms, film)
-				mu.Unlock()
-			}
-		}(film)
+	if duration == Long {
+		return films
 	}
 
-	wg.Wait()
+	filteredFilms := make([]*Film, 0, len(films))
+
+	for _, film := range films {
+		if film.Duration == 0 {
+			filteredFilms = append(filteredFilms, film)
+			continue
+		}
+
+		switch duration {
+		case Short:
+			if film.Duration <= DURATION_SHORT {
+				filteredFilms = append(filteredFilms, film)
+			}
+		case Medium:
+			if film.Duration <= DURATION_MEDIUM {
+				filteredFilms = append(filteredFilms, film)
+			}
+		}
+	}
+
 	return filteredFilms
 }

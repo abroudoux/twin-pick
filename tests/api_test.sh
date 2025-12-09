@@ -27,7 +27,8 @@ get() {
 endpoints=(
     "/v1/pick?usernames=abroudoux,potatoze&limit=1"
     "/v1/pick?usernames=abroudoux,potatoze&genres=action&limit=15"
-    "/v1/spot?genres=action&limit=10"
+    "/v1/pick?usernames=abroudoux,potatoze&genres=action,western"
+    # "/v1/spot?genres=action&limit=10"
 )
 
 for ep in "${endpoints[@]}"; do
