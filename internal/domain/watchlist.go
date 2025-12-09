@@ -39,8 +39,7 @@ func CompareWatchlists(watchlists map[string]*Watchlist) ([]*Film, error) {
 	for key, count := range filmCount {
 		if count == len(watchlists) {
 			commonFilms = append(commonFilms, filmMap[key])
-		}
-		if count >= len(watchlists)/2 {
+		} else if count >= len(watchlists)/2 {
 			commonFilms = append(commonFilms, filmMap[key])
 		}
 	}
