@@ -45,5 +45,10 @@ func buildPopularFilmsAjaxURL(params *domain.ScrapperFilters) string {
 	if len(params.Genres) > 0 {
 		url += "genre/" + strings.Join(params.Genres, "+") + "/"
 	}
+
+	if params.Platform != "" {
+		url += "on/" + params.Platform + "/"
+	}
+
 	return url
 }
