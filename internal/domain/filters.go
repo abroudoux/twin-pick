@@ -3,6 +3,7 @@ package domain
 type Filters struct {
 	Limit    int
 	Duration Duration
+	Strict   bool
 }
 
 type OrderFilter string
@@ -28,9 +29,10 @@ func NewScrapperFilters(genres []string, platform string, order OrderFilter) *Sc
 	}
 }
 
-func NewFilters(limit int, duration Duration) *Filters {
+func NewFilters(limit int, duration Duration, strict bool) *Filters {
 	return &Filters{
 		Limit:    limit,
 		Duration: duration,
+		Strict:   strict,
 	}
 }

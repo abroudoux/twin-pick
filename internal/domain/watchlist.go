@@ -14,7 +14,7 @@ func NewWatchlist(username string) *Watchlist {
 	}
 }
 
-func CompareWatchlists(watchlists map[string]*Watchlist) ([]*Film, error) {
+func CompareWatchlists(watchlists map[string]*Watchlist, strict bool) ([]*Film, error) {
 	if len(watchlists) == 0 {
 		return nil, errors.New("no watchlists provided")
 	}
@@ -36,10 +36,13 @@ func CompareWatchlists(watchlists map[string]*Watchlist) ([]*Film, error) {
 	}
 
 	var commonFilms []*Film
+	numWatchlists := len(watchlists)
+	majorityThreshold := numWatchlists/2 + 1
+
 	for key, count := range filmCount {
-		if count == len(watchlists) {
+		if count == numWatchlists {
 			commonFilms = append(commonFilms, filmMap[key])
-		} else if count >= len(watchlists)/2 {
+		} else if !strict && numWatchlists >= 3 && count >= majorityThreshold {
 			commonFilms = append(commonFilms, filmMap[key])
 		}
 	}

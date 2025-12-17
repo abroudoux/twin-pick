@@ -33,6 +33,7 @@ func parseParams(ctx *gin.Context) (params *domain.Params) {
 func parseFiltsers(ctx *gin.Context) (filters *domain.Filters) {
 	var limit int
 	var duration domain.Duration
+	var strict bool
 
 	limit = 0
 	if l := ctx.Query("limit"); l != "" {
@@ -53,7 +54,12 @@ func parseFiltsers(ctx *gin.Context) (filters *domain.Filters) {
 		}
 	}
 
-	return domain.NewFilters(limit, duration)
+	strict = false
+	if s := ctx.Query("strict"); s != "" {
+		strict = strings.ToLower(s) == "true"
+	}
+
+	return domain.NewFilters(limit, duration, strict)
 }
 
 func getPickParams(ctx *gin.Context) (pickParams *domain.PickParams, err error) {

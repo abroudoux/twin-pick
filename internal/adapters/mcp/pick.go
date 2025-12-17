@@ -15,7 +15,7 @@ func (s *Server) pickTool(req Request, call ToolCall) {
 		return
 	}
 
-	filters := domain.NewFilters(args.Limit, domain.GetDurationFromInt(args.Duration))
+	filters := domain.NewFilters(args.Limit, domain.GetDurationFromInt(args.Duration), false)
 	scrapperFilters := domain.NewScrapperFilters(args.Genres, args.Platform, domain.OrderFilterPopular)
 	params := domain.NewParams(filters, scrapperFilters)
 	pickParams := domain.NewPickParams(args.Usernames, params)

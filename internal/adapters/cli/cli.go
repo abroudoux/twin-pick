@@ -18,6 +18,7 @@ var (
 	platform    string
 	limit       int
 	duration    string
+	strict      bool
 	pickService *application.PickService
 	spotService *application.SpotService
 )

@@ -8,6 +8,7 @@ func initFlags(pickCmd *cobra.Command, spotComd *cobra.Command) {
 	pickCmd.Flags().StringVar(&platform, "platform", "", "Optional platform, e.g., netflix-fr")
 	pickCmd.Flags().IntVar(&limit, "limit", 0, "Limit number of films returned (0 = all)")
 	pickCmd.Flags().StringVar(&duration, "duration", "long", "Optional duration filter: short, medium, long")
+	pickCmd.Flags().BoolVar(&strict, "strict", false, "If true, only return films present in ALL watchlists (default: include films in 50%+ watchlists for 3+ users)")
 
 	spotComd.Flags().StringVar(&genres, "genres", "", "Optional genres, comma-separated")
 	spotComd.Flags().StringVar(&platform, "platform", "", "Optional platform, e.g., netflix-fr")

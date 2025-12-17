@@ -25,7 +25,7 @@ func (s *PickService) Pick(pickParams *domain.PickParams) ([]*domain.Film, error
 		return nil, err
 	}
 
-	films, err := domain.CompareWatchlists(watchlists)
+	films, err := domain.CompareWatchlists(watchlists, pickParams.Params.Filters.Strict)
 	if err != nil {
 		return nil, err
 	}
