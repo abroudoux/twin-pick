@@ -14,6 +14,7 @@ import (
 func parseParams(ctx *gin.Context) (params *domain.Params) {
 	var genres []string
 	var platform string
+	var order domain.OrderFilter
 
 	rawGenres := strings.Split(ctx.Query("genres"), ",")
 	for _, g := range rawGenres {
@@ -24,8 +25,22 @@ func parseParams(ctx *gin.Context) (params *domain.Params) {
 
 	platform = ctx.Query("platform")
 
+	order = domain.OrderFilterPopular
+	if o := ctx.Query("order"); o != "" {
+		switch strings.ToLower(o) {
+		case "popular":
+			order = domain.OrderFilterPopular
+		case "rating", "highest-rated":
+			order = domain.OrderFilterHighest
+		case "newest":
+			order = domain.OrderFilterNewest
+		case "shortest":
+			order = domain.OrderFilterShortest
+		}
+	}
+
 	filters := parseFiltsers(ctx)
-	scrapperFilters := domain.NewScrapperFilters(genres, platform, domain.OrderFilterPopular)
+	scrapperFilters := domain.NewScrapperFilters(genres, platform, order)
 
 	return domain.NewParams(filters, scrapperFilters)
 }

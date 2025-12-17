@@ -27,3 +27,23 @@ func buildPopularFilmsURL(params *domain.ScrapperFilters) string {
 	}
 	return url
 }
+
+func buildPopularFilmsAjaxURL(params *domain.ScrapperFilters) string {
+	var url string
+
+	switch params.Order {
+	case domain.OrderFilterHighest:
+		url = "https://letterboxd.com/films/ajax/by/rating/"
+	case domain.OrderFilterNewest:
+		url = "https://letterboxd.com/films/ajax/by/release/"
+	case domain.OrderFilterShortest:
+		url = "https://letterboxd.com/films/ajax/by/shortest/"
+	default:
+		url = "https://letterboxd.com/films/ajax/popular/"
+	}
+
+	if len(params.Genres) > 0 {
+		url += "genre/" + strings.Join(params.Genres, "+") + "/"
+	}
+	return url
+}
