@@ -6,8 +6,15 @@ vars:
   CLI_DIR: cmd/twinpick-cli
   API_DIR: cmd/twinpick-api
   MCP_DIR: cmd/twinpick-mcp
+  GRPC_DIR: cmd/twinpick-grpc
+  PROTO_DIR: api/proto
 
 tasks:
+  proto:
+    desc: "Generate Go code from protobuf files"
+    cmds:
+      - protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative {{.PROTO_DIR}}/twinpick.proto
+
   build:api:
     desc: "Build Twinpick API server"
     cmds:
@@ -23,12 +30,18 @@ tasks:
     cmds:
       - go build -o {{.BIN_DIR}}/twinpick-cli {{.CLI_DIR}}/main.go
 
+  build:grpc:
+    desc: "Build Twinpick gRPC server"
+    cmds:
+      - go build -o {{.BIN_DIR}}/twinpick-grpc {{.GRPC_DIR}}/main.go
+
   build:all:
     desc: "Build all Twinpick components"
     deps:
       - build:api
       - build:mcp
       - build:cli
+      - build:grpc
 
   run:api:
     desc: "Start Twinpick API server"
@@ -50,6 +63,13 @@ tasks:
       - build:cli
     cmds:
       - ./{{.BIN_DIR}}/twinpick-cli {{.CLI_ARGS}}
+
+  run:grpc:
+    desc: "Start Twinpick gRPC server"
+    deps:
+      - build:grpc
+    cmds:
+      - ./{{.BIN_DIR}}/twinpick-grpc
 
   run:all:
     desc: "Start all Twinpick components"
